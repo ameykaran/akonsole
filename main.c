@@ -1,13 +1,19 @@
 #include "headers.h"
+#include "prompt.h"
+
+
+char HOME_DIR[PATH_MAX], CURR_DIR[PATH_MAX], PREV_DIR[PATH_MAX];
 
 int main()
 {
-    // Keep accepting commands
-    while (1)
+    system("clear");
+
+    if (!getcwd(HOME_DIR, PATH_MAX))
     {
-        // Print appropriate prompt with username, systemname and directory before accepting input
-        prompt();
-        char input[4096];
-        fgets(input, 4096, stdin);
+        printf("Unable to determine the home directory!");
+        exit(1);
     }
+
+    strcpy(CURR_DIR, "~");
+    prompt();
 }
