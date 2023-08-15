@@ -1,6 +1,4 @@
 #include "headers.h"
-#include "prompt.h"
-
 
 char HOME_DIR[PATH_MAX], CURR_DIR[PATH_MAX], PREV_DIR[PATH_MAX];
 
@@ -15,5 +13,9 @@ int main()
     }
 
     strcpy(CURR_DIR, "~");
-    prompt();
+
+    // printf("%d\n", read_history()->histCount);
+    save_command("pastevents\n");
+    save_command("gcc main.c -o main");
+    save_command("ls .");
 }
