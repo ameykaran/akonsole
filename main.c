@@ -12,10 +12,14 @@ int main()
         exit(1);
     }
 
-    strcpy(CURR_DIR, "~");
+    strcpy(CURR_DIR, HOME_DIR);
 
-    // printf("%d\n", read_history()->histCount);
-    save_command("pastevents\n");
-    save_command("gcc main.c -o main");
-    save_command("ls .");
+    char buf[PATH_MAX];
+    printf("%s\n", getcwd(buf, PATH_MAX));
+    cd("~/new");
+    printf("%s\n", getcwd(buf, PATH_MAX));
+    cd("..");
+    printf("%s\n", getcwd(buf, PATH_MAX));
+    cd("");
+    printf("%s\n", getcwd(buf, PATH_MAX));
 }

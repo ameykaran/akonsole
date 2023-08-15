@@ -7,9 +7,13 @@
 #include <unistd.h>
 #include <linux/limits.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <errno.h>
 
 #include "prompt.h"
 #include "pastevents.h"
+#include "warp.h"
+#include "utility.h"
 
 #define ANSI_FG_COLOR_BLACK "\x1b[30m"
 #define ANSI_FG_COLOR_RED "\x1b[31m"
@@ -24,6 +28,5 @@
 #define min(a, b) a < b ? a : b
 #define max(a, b) a > b ? a : b
 
-void rstrip(char *str, char letter);
 
 #endif
