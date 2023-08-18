@@ -7,7 +7,6 @@
         exit(1);                               \
     }
 
-extern char HOME_DIR[PATH_MAX];
 
 char **allocate_memory()
 {

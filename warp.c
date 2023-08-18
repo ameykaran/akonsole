@@ -1,21 +1,18 @@
 #include "headers.h"
 
-extern char HOME_DIR[PATH_MAX];
-extern char CURR_DIR[PATH_MAX];
-extern char PREV_DIR[PATH_MAX];
-
-void cd_prev()
-{
-    cd(PREV_DIR);
-}
-
 void cd(char *path)
 {
 
-    // if (path[0] == '-')
-    //     cd(PREV_DIR);
-    // else
-
+    if (!strcmp(path, "-"))
+    {
+        if (!strcmp(PREV_DIR, ""))
+        {
+            print_error("Previous path not available.");
+            return;
+        }
+        cd(PREV_DIR);
+        return;
+    }
     if (!strcmp(path, "~") || !strcmp(path, ""))
     {
         cd(HOME_DIR);
@@ -27,44 +24,22 @@ void cd(char *path)
         return;
     }
 
-    char absPath[PATH_MAX];
-    int i = 0;
-
-    if (path[0] == '~')
-        for (; HOME_DIR[i]; i++)
-            absPath[i] = HOME_DIR[i];
-
-    else if (!strcmp(path, "."))
-        strcpy(absPath, CURR_DIR);
-
-    else if (!strcmp(path, ".."))
-    {
-        strcpy(absPath, CURR_DIR);
-        for (int j = strlen(absPath) - 1; j > -1; j--)
-            if (absPath[j] == '/')
-            {
-                absPath[j] = '\0';
-                break;
-            }
-    }
-
-    for (int j = 1; j < strlen(path); i++, j++)
-        absPath[i] = path[j];
+    char *absPath = get_abs_path(path);
 
     printf("Path - %s\n", absPath);
 
     if (chdir(absPath) == -1)
     {
         if (errno == EACCES)
-            print_error("Permission denied!\n");
+            print_error("Permission denied!");
         else if (errno == ENOTDIR)
-            print_error("The given path is not a directory~\n");
+            print_error("The given path is not a directory");
         else if (errno == ENOENT)
-            print_error("The given path doesn't exist!\n");
+            print_error("The given path doesn't exist!");
         else if (errno == ENAMETOOLONG)
-            print_error("Path length too long!\n");
+            print_error("Path length too long");
         else
-            print_error("An error occurred!\n");
+            print_error("An error occurred");
     }
     else
     {
@@ -72,5 +47,6 @@ void cd(char *path)
         strcpy(CURR_DIR, absPath);
     }
 
+    free(absPath);
     printf("%s\n", CURR_DIR);
 }

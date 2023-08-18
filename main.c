@@ -1,6 +1,6 @@
 #include "headers.h"
 
-char HOME_DIR[PATH_MAX], CURR_DIR[PATH_MAX], PREV_DIR[PATH_MAX];
+char HOME_DIR[PATH_MAX] = {}, CURR_DIR[PATH_MAX] = {}, PREV_DIR[PATH_MAX] = {};
 
 int main()
 {
@@ -14,12 +14,9 @@ int main()
 
     strcpy(CURR_DIR, HOME_DIR);
 
-    char buf[PATH_MAX];
-    printf("%s\n", getcwd(buf, PATH_MAX));
-    cd("~/new");
-    printf("%s\n", getcwd(buf, PATH_MAX));
-    cd("..");
-    printf("%s\n", getcwd(buf, PATH_MAX));
-    cd("");
-    printf("%s\n", getcwd(buf, PATH_MAX));
+    // cd("-");
+    // cd("..");
+    // cd("..");
+    // ls(".", 0, 1);
+    ls(".", 0, 1);
 }

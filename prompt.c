@@ -1,7 +1,5 @@
 #include "headers.h"
 
-extern char HOME_DIR[PATH_MAX], CURR_DIR[PATH_MAX], PREV_DIR[PATH_MAX];
-
 void prompt()
 {
     char host[1024];

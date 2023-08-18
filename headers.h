@@ -9,11 +9,18 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <errno.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <pwd.h>
+#include <grp.h>
+#include <time.h>
 
 #include "prompt.h"
 #include "pastevents.h"
 #include "warp.h"
 #include "utility.h"
+#include "peek.h"
+#include "seek.h"
 
 #define ANSI_FG_COLOR_BLACK "\x1b[30m"
 #define ANSI_FG_COLOR_RED "\x1b[31m"
@@ -28,5 +35,8 @@
 #define min(a, b) a < b ? a : b
 #define max(a, b) a > b ? a : b
 
+extern char HOME_DIR[PATH_MAX];
+extern char CURR_DIR[PATH_MAX];
+extern char PREV_DIR[PATH_MAX];
 
 #endif

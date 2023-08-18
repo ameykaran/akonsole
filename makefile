@@ -1,2 +1,2 @@
 main:
-	gcc -g main.c prompt.c pastevents.c utility.c warp.c
+	gcc -g main.c prompt.c pastevents.c utility.c warp.c peek.c seek.c
