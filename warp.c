@@ -24,7 +24,7 @@ void cd(char *path)
         return;
     }
 
-    char *absPath = get_abs_path(path);
+    char *absPath = get_abs_path(path, 1);
 
     printf("Path - %s\n", absPath);
 

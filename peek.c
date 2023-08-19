@@ -132,7 +132,7 @@ void print_detailed(directEntry *entries, int count, int maxSize)
         printf("%ld ", entry.numLinks);
         printf("%s ", entry.user);
         printf("%s ", entry.group);
-      
+
         print_aligned(entry.size, digits);
 
         char *time = ctime(&entry.timeCreated);
@@ -172,7 +172,7 @@ void print_detailed(directEntry *entries, int count, int maxSize)
 
 void ls(char *path, int isHidden, int isFullInfo)
 {
-    path = get_abs_path(path);
+    path = get_abs_path(path, 1);
 
     DIR *dir = opendir(path);
     if (!dir)

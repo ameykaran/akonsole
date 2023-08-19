@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 500
+
 #ifndef HEADERS_H_
 #define HEADERS_H_
 
@@ -14,6 +16,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
+#include <ftw.h>
 
 #include "prompt.h"
 #include "pastevents.h"
@@ -21,6 +24,7 @@
 #include "utility.h"
 #include "peek.h"
 #include "seek.h"
+#include "proclore.h"
 
 #define ANSI_FG_COLOR_BLACK "\x1b[30m"
 #define ANSI_FG_COLOR_RED "\x1b[31m"
@@ -38,5 +42,6 @@
 extern char HOME_DIR[PATH_MAX];
 extern char CURR_DIR[PATH_MAX];
 extern char PREV_DIR[PATH_MAX];
+extern long TERMINAL_PID;
 
 #endif

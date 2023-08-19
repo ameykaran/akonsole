@@ -1,5 +1,5 @@
-#ifndef SEEK_H_
-#define SEEK_H_
+#ifndef PEEK_H_
+#define PEEK_H_
 
 #define DIR_MAX_ENTRIES 2
 
