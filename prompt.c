@@ -2,11 +2,14 @@
 
 void prompt()
 {
+
     char host[1024];
     gethostname(host, 1024);
-    char *user = getenv("USER");
-    if (user == NULL)
-        user = "default";
+    char username[1024];
 
-    printf("<" ANSI_FG_COLOR_CYAN "%s" ANSI_COLOR_RESET "@%s:%s> ", user, host, CURR_DIR);
+    uid_t uid = getuid();
+    struct passwd *user = getpwuid(uid);
+    strcpy(username, user ? user->pw_name : "default");
+
+    printf("<" ANSI_FG_COLOR_CYAN "%s" ANSI_COLOR_RESET "@%s:%s> ", username, host, CURR_DIR);
 }

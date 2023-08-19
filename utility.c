@@ -12,11 +12,22 @@ void print_error(char *msg)
     printf(ANSI_FG_COLOR_RED "%s" ANSI_COLOR_RESET "\n", msg);
 }
 
-char *get_abs_path(char *path)
+char *get_abs_path(char *path, int expandDots)
 {
     char *absPath = (char *)calloc(PATH_MAX, sizeof(char));
     int i = 0;
     int startInd = 1;
+
+    if (path[0] == '/')
+    {
+        free(absPath);
+        return path;
+    }
+    if (!expandDots && path[0] == '.')
+    {
+        free(absPath);
+        return path;
+    }
 
     if (!strcmp(path, "-"))
     {
