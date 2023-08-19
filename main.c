@@ -20,15 +20,28 @@ int main()
     char buffer[1024];
     sprintf(buffer, "%ld", TERMINAL_PID);
 
-    // prompt();
-    // cd("-");
-    // cd("..");
-    // cd("..");
-    // ls(".", 0, 1);
+    prompt();
+    cd("academs/test");
+    prompt();
+    cd("..");
+    prompt();
+    cd("..");
+    prompt();
+    cd("..");
+    prompt();
+    cd("..");
+    prompt();
+    cd("..");
+    prompt();
+
+    cd("-");
+    cd("-");
+    prompt();
+    ls(".", 0, 1);
     // find("hello", "..");
     // find("hello", ".");
     // proclore(buffer);
-    proclore("396429");
+    // proclore("396429");
     // while (1)
     ;
 }

@@ -1,18 +1,49 @@
-# Description
+# Command descriptions
+
+### prompt
+
+<Username@SystemName:~>
+
+### peek
+- Colour coding
+    - blue for directory
+    - cyan for symbolic link
+    - green for executable
+    - white for regular file
+
+1. Total in the `peek -l` command doesn't actually print the disk usage.
+
+- [x] Implement the normal and detailed versions
+- [ ] Handle errors
+- [ ] Add flags
 
 
 
-peek
-green for executable, blue for dir, cyan for links, white for reg file
-
-# Assumptions
-Size of command can only be ARG_MAX
-username and system names max 1024
-
-
-Total in the ls -l command isn't perfect
 
 seek doesnot follow the symlinks
+
+
+# Assumptions
+- The max len of any command can only be `ARG_MAX` bytes (131072 in my system)
+
+- The max len of username and system name should be `1024` bytes
+
+
+
+## todo
+# warp
+strip space, forward slash
+multiple paths
+
+# pastevents
+purge
+execute
+
+# peek 
+error handling
+
+
+
 
 
 realpath

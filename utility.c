@@ -1,10 +1,11 @@
 #include "headers.h"
 
-void rstrip(char *str, char letter)
+char *rstrip(char *str, char letter)
 {
     int len = strlen(str);
     while (str[len - 1] == letter)
         str[--len] = '\0';
+    return str;
 }
 
 void print_error(char *msg)
@@ -15,18 +16,12 @@ void print_error(char *msg)
 char *get_abs_path(char *path, int expandDots)
 {
     char *absPath = (char *)calloc(PATH_MAX, sizeof(char));
-    int i = 0;
-    int startInd = 1;
+    int changed = 0;
 
-    if (path[0] == '/')
+    if ((path[0] == '/') || (!expandDots && path[0] == '.'))
     {
-        free(absPath);
-        return path;
-    }
-    if (!expandDots && path[0] == '.')
-    {
-        free(absPath);
-        return path;
+        strcpy(absPath, path);
+        return absPath;
     }
 
     if (!strcmp(path, "-"))
@@ -36,37 +31,57 @@ char *get_abs_path(char *path, int expandDots)
     }
 
     if (path[0] == '~')
-        for (; HOME_DIR[i]; i++)
-            absPath[i] = HOME_DIR[i];
-
-    if (!strcmp(path, "."))
-        strcpy(absPath, CURR_DIR);
-
-    else if (!strcmp(path, ".."))
     {
+        changed = 1;
+        strcpy(absPath, HOME_DIR);
+        strcat(absPath, "/");
+        path += 1;
+    }
+    if (path[1] == '.' && path[0] == '.')
+    {
+        changed = 1;
         strcpy(absPath, CURR_DIR);
+        if (!strcmp(absPath, "~"))
+            strcpy(absPath, HOME_DIR);
         for (int j = strlen(absPath) - 1; j > -1; j--)
             if (absPath[j] == '/')
             {
                 absPath[j] = '\0';
                 break;
             }
-        startInd = 2;
+        strcat(absPath, "/");
+        path += 2;
+    }
+    else if (path[0] == '.')
+    {
+        changed = 1;
+        strcpy(absPath, CURR_DIR);
+        strcat(absPath, "/");
+        path += 1;
     }
 
-    for (int j = startInd; j < strlen(path); i++, j++)
-        absPath[i] = path[j];
+    if (!changed)
+    {
+        strcpy(absPath, "./");
+        strcat(absPath, path);
+        return get_abs_path(absPath, 1);
+    }
+
+    if (path[0] && path[1])
+        strcat(absPath, path + (changed ? 1 : 0));
 
     return absPath;
 }
 
 char *get_rel_path(char *path)
 {
-    if (!strncmp(CURR_DIR, path, strlen(CURR_DIR)))
+    if (!strcmp(path, HOME_DIR))
     {
-        path = path + strlen(HOME_DIR) + 1;
+        path[0] = '~';
+        path[1] = '\0';
+        return path;
     }
-    else if (!strncmp(HOME_DIR, path, strlen(HOME_DIR)))
+    if (!strncmp(HOME_DIR, path, strlen(HOME_DIR)))
     {
         path = path + strlen(HOME_DIR) - 1;
         path[0] = '~';

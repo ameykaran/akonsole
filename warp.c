@@ -2,7 +2,6 @@
 
 void cd(char *path)
 {
-
     if (!strcmp(path, "-"))
     {
         if (!strcmp(PREV_DIR, ""))
@@ -18,17 +17,10 @@ void cd(char *path)
         cd(HOME_DIR);
         return;
     }
-    if (!strcmp(path, "-"))
-    {
-        cd(PREV_DIR);
-        return;
-    }
 
     char *absPath = get_abs_path(path, 1);
 
-    printf("Path - %s\n", absPath);
-
-    if (chdir(absPath) == -1)
+    if (chdir(get_abs_path(absPath, 0)) == -1)
     {
         if (errno == EACCES)
             print_error("Permission denied!");
@@ -44,9 +36,10 @@ void cd(char *path)
     else
     {
         strcpy(PREV_DIR, CURR_DIR);
-        strcpy(CURR_DIR, absPath);
+        strcpy(CURR_DIR, rstrip(absPath, '/'));
     }
 
-    free(absPath);
+    if (absPath[0])
+        free(absPath);
     printf("%s\n", CURR_DIR);
 }
