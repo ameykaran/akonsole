@@ -25,6 +25,7 @@
 #include "peek.h"
 #include "seek.h"
 #include "proclore.h"
+#include "command_handler.h"
 
 #define ANSI_FG_COLOR_BLACK "\x1b[30m"
 #define ANSI_FG_COLOR_RED "\x1b[31m"

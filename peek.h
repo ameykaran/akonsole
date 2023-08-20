@@ -1,7 +1,7 @@
 #ifndef PEEK_H_
 #define PEEK_H_
 
-#define DIR_MAX_ENTRIES 2
+#define DIR_MAX_ENTRIES 100
 
 typedef struct directEntry directEntry;
 
@@ -16,6 +16,6 @@ struct directEntry
     char name[PATH_MAX];
 };
 
-void ls(char *, int, int);
+void ls(char *path, int isHidden, int isFullInfo);
 
 #endif

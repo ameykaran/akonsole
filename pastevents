@@ -1,15 +1,15 @@
-pastevents
-pastevents
-gcc main.c -o main
-pastevents
-gcc main.c -o main
-ls .
-pastevents
-gcc main.c -o main
-ls .
-pastevents
-gcc main.c -o main
-ls .
-pastevents
-gcc main.c -o main
-ls .
+warp .. 
+warp ..; warp -; peek
+warp ..; warp ..; warp -; peek;
+warp
+exit
+warp ..;warp -;
+exit
+peek ..
+peek -
+warp ..
+peek project1
+peek -l project0
+exit  
+exit ;
+exit

@@ -1,38 +1,5 @@
 #include "headers.h"
 
-void get_entry_name(struct stat stat, struct dirent *dir, char *string)
-{
-    int ind = 0;
-    if (S_ISLNK(stat.st_mode))
-    {
-        strcpy(strlen(string) + string, ANSI_FG_COLOR_CYAN);
-        char absPath[PATH_MAX];
-
-        realpath(dir->d_name, absPath);
-        strcpy(string + ind, dir->d_name);
-        strcpy(strlen(string) + string, " -> ");
-
-        struct stat symStat;
-        lstat(absPath, &symStat);
-
-        if (S_ISLNK(symStat.st_mode))
-            strcpy(strlen(string) + string, ANSI_FG_COLOR_CYAN);
-        else if (S_ISDIR(symStat.st_mode))
-            strcpy(strlen(string) + string, ANSI_FG_COLOR_BLUE);
-        else if (symStat.st_mode & S_IXUSR | symStat.st_mode & S_IXGRP | symStat.st_mode & S_IXOTH)
-            strcpy(strlen(string) + string, ANSI_FG_COLOR_GREEN);
-
-        strcpy(strlen(string) + string, ANSI_COLOR_RESET);
-    }
-    else if (S_ISDIR(stat.st_mode))
-        strcpy(strlen(string) + string, ANSI_FG_COLOR_BLUE);
-    else if (stat.st_mode & S_IXUSR | stat.st_mode & S_IXGRP | stat.st_mode & S_IXOTH)
-        strcpy(strlen(string) + string, ANSI_FG_COLOR_GREEN);
-
-    !(S_ISLNK(stat.st_mode)) && strcpy(string + ind, dir->d_name);
-    strcpy(strlen(string) + string, ANSI_COLOR_RESET);
-}
-
 void get_info(struct dirent *direntry, struct stat stat, directEntry *entries, int ind, int *maxSize)
 {
     if (S_ISLNK(stat.st_mode))
@@ -87,29 +54,12 @@ void print_entries(directEntry *entries, int count)
 
         if (entry.perms[0] == 'l')
             printf(ANSI_FG_COLOR_CYAN);
-        // char absPath[PATH_MAX];
-
-        // realpath(dir->d_name, absPath);
-        // printf("%s -> ", dir->d_name);
-
-        // struct stat symStat;
-        // lstat(absPath, &symStat);
-
-        // if (S_ISLNK(symStat.st_mode))
-        //     printf(ANSI_FG_COLOR_CYAN);
-        // else if (S_ISDIR(symStat.st_mode))
-        //     printf(ANSI_FG_COLOR_BLUE);
-        // else if (symStat.st_mode & S_IXUSR | symStat.st_mode & S_IXGRP | symStat.st_mode & S_IXOTH)
-        //     printf(ANSI_FG_COLOR_GREEN);
-
-        // printf(ANSI_COLOR_RESET);
         else if (entry.perms[0] == 'd')
             printf(ANSI_FG_COLOR_BLUE);
         else if (entry.perms[3] == 'x' | entry.perms[6] == 'x' | entry.perms[9] == 'x')
             printf(ANSI_FG_COLOR_GREEN);
 
         printf(entry.name);
-        // !(entry.perms[0] == 'l' && printf(dir->d_name);
         printf(ANSI_COLOR_RESET "\n");
     }
 }
@@ -123,7 +73,6 @@ void print_detailed(directEntry *entries, int count, int maxSize)
         maxSize /= 10;
     }
 
-    printf("Digits - *%d*", digits);
     printf("total %d\n", count);
     for (int i = 0; i < count; i++)
     {
@@ -170,9 +119,13 @@ void print_detailed(directEntry *entries, int count, int maxSize)
     }
 }
 
-void ls(char *path, int isHidden, int isFullInfo)
+void ls(char *arg, int isHidden, int isFullInfo)
 {
+    char *path = strdup(arg);
+    path = strip(path, ' ');
     path = get_abs_path(path, 1);
+
+    cd(path, 1);
 
     DIR *dir = opendir(path);
     if (!dir)
@@ -181,18 +134,23 @@ void ls(char *path, int isHidden, int isFullInfo)
             print_error("Directory doesn't exist");
         else
             print_error("Error listing the directory!");
-        exit(1);
+        return;
     }
 
     int maxEntries = DIR_MAX_ENTRIES;
 
-    directEntry *entries = (directEntry *)malloc(maxEntries * sizeof(directEntry));
+    directEntry *entries = (directEntry *)calloc(maxEntries, sizeof(directEntry));
+    if (!entries)
+    {
+        print_error("Cannot allocate memory to entries");
+        return;
+    }
+
     int count = 0;
-
     struct dirent *direntry;
-
     errno = 0;
     int maxSize = 0;
+
     while (direntry = readdir(dir))
     {
         // ahndle error
@@ -215,8 +173,13 @@ void ls(char *path, int isHidden, int isFullInfo)
     }
     qsort(entries, count, sizeof(directEntry), comparator);
 
-    // print_entries(entries, count);
-    // print_detailed(entries, count, maxSize);
+    if (isFullInfo)
+        print_detailed(entries, count, maxSize);
+    else
+        print_entries(entries, count);
+
+    cd(PREV_DIR, 1);
 
     free(path);
+    free(entries);
 }

@@ -11,7 +11,7 @@
     - green for executable
     - white for regular file
 
-1. Total in the `peek -l` command doesn't actually print the disk usage.
+1. Total in the `peek -l` command doesn't actually print the disk usage. It prints the total number of entries in the directory.
 
 - [x] Implement the normal and detailed versions
 - [ ] Handle errors

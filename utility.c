@@ -8,6 +8,19 @@ char *rstrip(char *str, char letter)
     return str;
 }
 
+char *lstrip(char *str, char letter)
+{
+    int i = 0;
+    while (str[i++] == letter)
+        ;
+    return str + i - 1;
+}
+
+char *strip(char *str, char letter)
+{
+    return lstrip(rstrip(str, letter), letter);
+}
+
 void print_error(char *msg)
 {
     printf(ANSI_FG_COLOR_RED "%s" ANSI_COLOR_RESET "\n", msg);
@@ -56,13 +69,16 @@ char *get_abs_path(char *path, int expandDots)
     {
         changed = 1;
         strcpy(absPath, CURR_DIR);
+        if (!strcmp(absPath, "~"))
+            strcpy(absPath, HOME_DIR);
         strcat(absPath, "/");
         path += 1;
     }
 
     if (!changed)
     {
-        strcpy(absPath, "./");
+        strcpy(absPath, CURR_DIR);
+        strcat(absPath, "/");
         strcat(absPath, path);
         return get_abs_path(absPath, 1);
     }
@@ -75,20 +91,39 @@ char *get_abs_path(char *path, int expandDots)
 
 char *get_rel_path(char *path)
 {
+    char *dup = strdup(path);
     if (!strcmp(path, HOME_DIR))
     {
-        path[0] = '~';
-        path[1] = '\0';
-        return path;
+        dup[0] = '~';
+        dup[1] = '\0';
+        return dup;
     }
     if (!strncmp(HOME_DIR, path, strlen(HOME_DIR)))
     {
-        path = path + strlen(HOME_DIR) - 1;
-        path[0] = '~';
-        path[1] = '/';
+        dup = dup + strlen(HOME_DIR) - 1;
+        dup[0] = '~';
+        dup[1] = '/';
     }
+    return dup;
+}
 
-    return path;
+char *remove_whitespaces(char *text)
+{
+    char *str = strdup(text);
+    int i = 0, j = 0;
+    int n = strlen(str);
+    while (j < n)
+    {
+        while (str[j] == ' ' && str[j + 1] == ' ')
+            j++;
+        if (i != j)
+            str[i] = str[j];
+        i++;
+        j++;
+    }
+    str[i] = '\0';
+    free(text);
+    return strip(str, ' ');
 }
 
 void print_aligned(long num, int digits)

@@ -3,13 +3,14 @@
 
 #define MAX_HISTORY 15
 
-struct pair
+typedef struct historyPair
 {
     int histCount;
     char **history;
-};
+} historyPair;
 
-int open_history_file();
-void save_command(char *);
+historyPair *read_history();
+void save_command(char *command);
+char *replace_pastevents_execute(char *arg);
 
 #endif
