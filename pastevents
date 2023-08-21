@@ -1,1 +1,15 @@
+peek -z
+peek -o
+peek -ol
 exit
+warp ..; peek
+warp .. &;peek ..
+warp ..&;peek .
+peek .&warp ..
+warp ..&peek ..
+warp -&peek project1
+warp osn&peek .&
+warp academs&peek .&
+warp &; warp - &peek ..
+exit
+warp ..&

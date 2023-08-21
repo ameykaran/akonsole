@@ -26,16 +26,39 @@ int peekHandler(const char *args)
     {
         if (arg[0] == '-')
         {
-            if (arg[1] == 'a')
-                hidden = 1;
-            else if (arg[1] == 'l')
-                detailed = 1;
-
-            if (strlen(arg) == 3)
-                if (arg[2] == 'a')
+            if ((strlen(arg) == 2) || (strlen(arg) == 3))
+            {
+                if (arg[1] == 'a')
                     hidden = 1;
-                else if (arg[2] == 'l')
+                else if (arg[1] == 'l')
                     detailed = 1;
+                else
+                {
+                    print_error("Unkown flags");
+                    // TODO add peek usage
+                    return 1;
+                }
+
+                if (strlen(arg) == 3)
+                {
+                    if (arg[2] == 'a')
+                        hidden = 1;
+                    else if (arg[2] == 'l')
+                        detailed = 1;
+                    else
+                    {
+                        print_error("Unkown flags");
+                        // TODO add peek usage
+                        return 1;
+                    }
+                }
+            }
+            else
+            {
+                print_error("Unkown flags");
+                // TODO add peek usage
+                return 1;
+            }
         }
         strcpy(prev, arg);
         arg = strtok(NULL, " ");
@@ -98,6 +121,7 @@ int procloreHandler(const char *args)
 }
 
 int seekHandler(const char *arg) {}
+
 int exitHandler()
 {
     printf("Exiting the terminal...\n");
@@ -152,7 +176,6 @@ CommandNode *dequeueList(CommandsList *list, char *command)
     return start;
 }
 
-void execute_single_command(char *cmd);
 void execute_multi_command(char *cmd)
 {
     char *arg = strdup(cmd);
@@ -187,27 +210,8 @@ void execute_multi_command(char *cmd)
     }
 }
 
-void execute_single_command(char *cmd)
+int run_single_command(char *command, int isBg)
 {
-    char *arg = strdup(cmd);
-    arg = rstrip(arg, '\n');
-    char *command = remove_whitespaces(arg);
-    // char delim[2] = " ";
-
-    if (!strcmp(command, ""))
-        return;
-
-    // CommandWords words = {NULL, NULL};
-    // char *word = strtok(arg, delim);
-    // while (word)
-    // {
-    //     pushWord(&words, strip(strdup(word), ' '));
-    //     word = strtok(NULL, delim);
-    // }
-    // char *command = genCommand(words);
-
-    // printf("Command*%s*\n", command);
-
     char *exec = 0;
     char *args = 0;
 
@@ -236,13 +240,54 @@ void execute_single_command(char *cmd)
         }
     }
 
-    // Remove
-    // int evaluatedCmdID = evaluatedCmd ? evaluatedCmd->cmdID : UNKNOWN;
-    // printf("cmd - %d\n", evaluatedCmdID);
-
-    if (evaluatedCmd && evaluatedCmd->cmdID)
+    if (isBg)
     {
-        (evaluatedCmd->handler)(args);
-        printf("\n");
+        int childPid = fork();
+        if (childPid == 0)
+        {
+            if (evaluatedCmd && evaluatedCmd->cmdID)
+            {
+                printf("Background Process\n");
+                (evaluatedCmd->handler)(args);
+                printf("\n");
+            }
+        }
     }
+    else
+    {
+        if (evaluatedCmd && evaluatedCmd->cmdID)
+        {
+            printf("Foreground Process\n");
+            (evaluatedCmd->handler)(args);
+            printf("\n");
+        }
+    }
+}
+
+void execute_single_command(char *cmd)
+{
+    char *arg = strdup(cmd);
+    arg = rstrip(arg, '\n');
+    char *command = remove_whitespaces(arg);
+
+    if (!strcmp(command, ""))
+        return;
+
+    int ampCount = 0;
+    for (int i = 0; command[i]; i++)
+        if (command[i] == '&')
+            ampCount++;
+
+    char *bgCmd;
+    char *temp;
+    bgCmd = strtok_r(command, "&", &temp);
+    while (ampCount)
+    {
+        run_single_command(strip(strdup(bgCmd), ' '), 1);
+        ampCount--;
+        bgCmd = strtok_r(NULL, "&", &temp);
+    }
+
+    if (bgCmd)
+        run_single_command(bgCmd, 0);
 }
