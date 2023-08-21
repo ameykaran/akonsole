@@ -12,5 +12,7 @@ typedef struct historyPair
 historyPair *read_history();
 void save_command(char *command);
 char *replace_pastevents_execute(char *arg);
+void delete_history();
+void print_history();
 
 #endif

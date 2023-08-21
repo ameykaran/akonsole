@@ -1,5 +1,7 @@
 #include "headers.h"
 
+void execute_single_command(char *cmd);
+
 int warpHandler(const char *args)
 {
     char *arguments = strdup(args);
@@ -22,7 +24,6 @@ int peekHandler(const char *args)
     char prev[PATH_MAX];
     while (arg)
     {
-        // printf("%s\n", arg);
         if (arg[0] == '-')
         {
             if (arg[1] == 'a')
@@ -39,10 +40,64 @@ int peekHandler(const char *args)
         strcpy(prev, arg);
         arg = strtok(NULL, " ");
     }
+
+    if (prev[0] == '-')
+        strcpy(prev, ".");
     // printf("*%d*%d -%s\n", hidden, detailed, prev);
     ls(prev, hidden, detailed);
 }
 
+int pasteventsHandler(const char *args)
+{
+    if (!strncmp(args, "execute ", 9))
+    {
+        char *cmd = strdup(args);
+        char *execCmd = replace_pastevents_execute(cmd);
+
+        if (execCmd == "")
+        {
+            print_error("The given command is erroneous.");
+            return 1;
+        }
+
+        execute_single_command(execCmd);
+        free(cmd);
+        return 0;
+    }
+    else if (!strcmp(args, "purge"))
+    {
+        delete_history();
+    }
+    else if (!strcmp(args, ""))
+    {
+        print_history();
+    }
+    else
+    {
+        print_error("Invalid synatx of pastevents");
+        printf(ANSI_FG_COLOR_BLUE "---Usage---\npastevents               - prints the last 15 commands\npastevents purge         - deletes all saved commands\npastevents execute <num> - executes the <num>th recent command\n" ANSI_COLOR_RESET);
+    }
+}
+
+int procloreHandler(const char *args)
+{
+    if (strcmp(args, ""))
+    {
+        char *str = strdup(args);
+        char *temp;
+        long pid = strtoll(str, &temp, 10);
+        proclore(pid);
+        free(str);
+    }
+    else
+    {
+        char termPID[1024];
+        sprintf(termPID, "%ld", TERMINAL_PID);
+        proclore(TERMINAL_PID);
+    }
+}
+
+int seekHandler(const char *arg) {}
 int exitHandler()
 {
     printf("Exiting the terminal...\n");
@@ -52,9 +107,9 @@ int exitHandler()
 cmdMap cmdTable[] = {
     {"warp", WARP, warpHandler},
     {"peek", PEEK, peekHandler},
-    {"pastevents", PASTEVENTS},
-    {"proclore", PROCLORE},
-    {"seek", SEEK},
+    {"pastevents", PASTEVENTS, pasteventsHandler},
+    {"proclore", PROCLORE, procloreHandler},
+    {"seek", SEEK, seekHandler},
     {"exit", EXIT, exitHandler}};
 
 typedef struct CommandNode
@@ -96,49 +151,6 @@ CommandNode *dequeueList(CommandsList *list, char *command)
         list->head = start->next;
     return start;
 }
-// typedef struct CommandWord
-// {
-//     char data[1024];
-//     struct CommandWord *next;
-// } CommandWord;
-// typedef struct CommandWords
-// {
-//     CommandWord *head;
-//     CommandWord *tail;
-// } CommandWords;
-// char *genCommand(CommandWords words)
-// {
-//     char *command = (char *)calloc(ARG_MAX, sizeof(char));
-//     CommandWord *start = words.head;
-//     CommandWord *next;
-//     while (start != NULL)
-//     {
-//         strcat(command, start->data);
-//         strcat(command, " ");
-
-//         next = start->next;
-//         free(start);
-//         start = next;
-//     }
-//     return rstrip(command, ' ');
-// }
-// void pushWord(CommandWords *words, char *word)
-// {
-//     CommandWord *temp = (CommandWord *)malloc(1 * sizeof(CommandWord));
-//     strcpy(temp->data, word);
-//     temp->next = NULL;
-
-//     if (!words->head)
-//     {
-//         words->head = temp;
-//         words->tail = temp;
-//     }
-//     else
-//     {
-//         words->tail->next = temp;
-//         words->tail = temp;
-//     }
-// }
 
 void execute_single_command(char *cmd);
 void execute_multi_command(char *cmd)
@@ -146,12 +158,12 @@ void execute_multi_command(char *cmd)
     char *arg = strdup(cmd);
     arg = remove_whitespaces(arg);
     arg = replace_pastevents_execute(arg);
-
     if (arg == "")
     {
         print_error("The given command is erroneous.");
         return;
     }
+
     save_command(arg);
 
     char delim[2] = ";";
@@ -229,5 +241,8 @@ void execute_single_command(char *cmd)
     // printf("cmd - %d\n", evaluatedCmdID);
 
     if (evaluatedCmd && evaluatedCmd->cmdID)
+    {
         (evaluatedCmd->handler)(args);
+        printf("\n");
+    }
 }

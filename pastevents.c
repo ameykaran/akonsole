@@ -10,8 +10,10 @@
     if (!histFile)                             \
     {                                          \
         printf("Could not open pastevents\n"); \
-        return ;                               \
+        return;                                \
     }
+
+char *replace_pastevents(char *arg);
 
 char **allocate_memory()
 {
@@ -60,10 +62,14 @@ historyPair *read_history()
     return pair;
 }
 
-void save_command(char *command)
+void save_command(char *cmd)
 {
-    if (!strcmp(command, "pastevents"))
+    char *command = strdup(cmd);
+    command = replace_pastevents(command);
+    if (!strcmp(command, ""))
         return;
+
+    command = rstrip(command, ';');
 
     char *HIST_PATH = get_history_path();
 
@@ -84,7 +90,7 @@ void save_command(char *command)
     {
         FILE *histFile = fopen(HIST_PATH, "w");
         ERROR_HISTORY_NOT_OPENED_RET_VOID
-            for (int i = 1; i < MAX_HISTORY; i++)
+        for (int i = 1; i < MAX_HISTORY; i++)
             fputs(history[i], histFile);
         fclose(histFile);
     }
@@ -97,19 +103,21 @@ void save_command(char *command)
 
     deallocate_memory(history);
     free(pair);
+    free(HIST_PATH);
+    free(command);
 }
 
 char *replace_pastevents_execute(char *arg)
 {
     historyPair *pair = read_history();
-    char executeCmd[20] = "pastevents execute ";
+    char *executeCmd = "pastevents execute ";
 
     int i = 0, j = 0;
     for (; i < strlen(arg); i++)
     {
         if (arg[i] == executeCmd[j])
         {
-            while (arg[i] == executeCmd[j])
+            while (j < strlen(executeCmd) && arg[i] == executeCmd[j])
             {
                 i++;
                 j++;
@@ -132,7 +140,8 @@ char *replace_pastevents_execute(char *arg)
             free(arg);
             return strdup("");
         }
-        char *newCmd = strdup(arg);
+        char *newCmd = (char *)calloc(ARG_MAX, sizeof(char));
+        strcpy(newCmd, arg);
         newCmd[i - 20 + 1] = '\0';
 
         if (cmdNum <= pair->histCount)
@@ -144,11 +153,67 @@ char *replace_pastevents_execute(char *arg)
         while (arg[i] && arg[i] != ';')
             i++;
         strcat(newCmd, arg + i + 1);
-        strcpy(arg, newCmd);
-        free(newCmd);
+        free(arg);
+        arg = newCmd;
     }
 
     deallocate_memory(pair->history);
     free(pair);
-    return arg;
+
+    return strip(strip(arg, '\n'), ' ');
+}
+
+char *replace_pastevents(char *arg)
+{
+    char *executeCmd = "pastevents";
+    const int argLen = strlen(arg);
+
+    int i = 0, j = 0;
+    for (; i < argLen; i++)
+    {
+        if (arg[i] == executeCmd[j])
+        {
+            while (j < strlen(executeCmd) && arg[i] == executeCmd[j])
+            {
+                i++;
+                j++;
+            }
+            if (executeCmd[j] == '\0')
+                break;
+        }
+        j = 0;
+    }
+
+    if (j != 0)
+    {
+        char *temp = strdup(arg + i);
+        arg[i - 11 + 1] = '\0';
+        i = 0;
+        while (temp[i] != ';' && i < strlen(temp))
+            i++;
+
+        strcat(arg, temp + i);
+        free(temp);
+    }
+    return strip(strip(arg, '\n'), ' ');
+}
+
+void delete_history()
+{
+    char *HIST_PATH = get_history_path();
+    FILE *histFile = fopen(HIST_PATH, "w");
+    ERROR_HISTORY_NOT_OPENED_RET_VOID
+    free(HIST_PATH);
+    fclose(histFile);
+}
+
+void print_history()
+{
+    historyPair *pair = read_history();
+    for (int i = 0; i < pair->histCount; i++)
+        printf("%s", pair->history[i]);
+
+    deallocate_memory(pair->history);
+    free(pair);
+    return;
 }

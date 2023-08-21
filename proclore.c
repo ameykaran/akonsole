@@ -1,11 +1,11 @@
 #include "headers.h"
 
-void proclore(char *pid)
+void proclore(long pid)
 {
     char statusFilePath[PATH_MAX];
     FILE *statusFile;
 
-    snprintf(statusFilePath, PATH_MAX, "/proc/%s/status", pid);
+    snprintf(statusFilePath, PATH_MAX, "/proc/%ld/status", pid);
 
     statusFile = fopen(statusFilePath, "r");
     if (!statusFile)
@@ -30,7 +30,7 @@ void proclore(char *pid)
     }
 
     char executablePath[1024];
-    snprintf(executablePath, 1024, "/proc/%s/exe", pid);
+    snprintf(executablePath, 1024, "/proc/%ld/exe", pid);
     realpath(executablePath, info.exec);
 
     printf("Process id: %ld\n", info.pid);

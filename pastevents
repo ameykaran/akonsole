@@ -1,15 +1,1 @@
-warp .. 
-warp ..; warp -; peek
-warp ..; warp ..; warp -; peek;
-warp
-exit
-warp ..;warp -;
-exit
-peek ..
-peek -
-warp ..
-peek project1
-peek -l project0
-exit  
-exit ;
 exit

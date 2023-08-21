@@ -1,20 +1,21 @@
 #include "headers.h"
 
-void cd(char *path)
+void cd(char *path, int printOutput)
 {
     if (!strcmp(path, "-"))
     {
         if (!strcmp(PREV_DIR, ""))
         {
-            print_error("Previous path not available.");
+            if (!printOutput)
+                print_error("Previous path not available.");
             return;
         }
-        cd(PREV_DIR);
+        cd(PREV_DIR, printOutput);
         return;
     }
-    if (!strcmp(path, "~") || !strcmp(path, ""))
+    if (!strcmp(path, "~"))
     {
-        cd(HOME_DIR);
+        cd(HOME_DIR, printOutput);
         return;
     }
 
@@ -22,24 +23,29 @@ void cd(char *path)
 
     if (chdir(get_abs_path(absPath, 0)) == -1)
     {
-        if (errno == EACCES)
-            print_error("Permission denied!");
-        else if (errno == ENOTDIR)
-            print_error("The given path is not a directory");
-        else if (errno == ENOENT)
-            print_error("The given path doesn't exist!");
-        else if (errno == ENAMETOOLONG)
-            print_error("Path length too long");
-        else
-            print_error("An error occurred");
+        if (!printOutput)
+        {
+            if (errno == EACCES)
+                print_error("Permission denied!");
+            else if (errno == ENOTDIR)
+                print_error("The given path is not a directory");
+            else if (errno == ENOENT)
+                print_error("The given path doesn't exist!");
+            else if (errno == ENAMETOOLONG)
+                print_error("Path length too long");
+            else
+                print_error("An error occurred");
+        }
     }
     else
     {
         strcpy(PREV_DIR, CURR_DIR);
+        absPath = getcwd(absPath, PATH_MAX);
         strcpy(CURR_DIR, rstrip(absPath, '/'));
     }
 
     if (absPath[0])
         free(absPath);
-    printf("%s\n", CURR_DIR);
+    if (!printOutput)
+        printf("%s\n", CURR_DIR);
 }
