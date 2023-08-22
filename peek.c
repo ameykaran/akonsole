@@ -132,6 +132,8 @@ void ls(char *arg, int isHidden, int isFullInfo)
     {
         if (errno == ENOENT)
             print_error("Directory doesn't exist");
+        else if (errno == ENOTDIR)
+            print_error("The given path is not a directory");
         else
             print_error("Error listing the directory!");
         return;
@@ -153,7 +155,11 @@ void ls(char *arg, int isHidden, int isFullInfo)
 
     while (direntry = readdir(dir))
     {
-        // ahndle error
+        if (errno)
+        {
+            print_error("An error occurred");
+            return;
+        }
 
         char *entryName = direntry->d_name;
         if (!isHidden && entryName[0] == '.')
@@ -183,3 +189,14 @@ void ls(char *arg, int isHidden, int isFullInfo)
     free(path);
     free(entries);
 }
+
+
+/*
+ino - 1455232
+stmode 41471
+
+stmode 16877
+
+
+
+*/

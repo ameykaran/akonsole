@@ -137,3 +137,13 @@ void print_aligned(long num, int digits)
         printf(" ");
     printf("%ld ", num);
 }
+
+char *trim(char *string, char *prefix)
+{
+    char *new = strdup(string);
+    int i = 0;
+    while (new[i] == prefix[i])
+        i++;
+    new = new + i + 1;
+    return new;
+}

@@ -1,5 +1,5 @@
 #define _XOPEN_SOURCE 500
-
+#define _DEFAULT_SOURCE
 #ifndef HEADERS_H_
 #define HEADERS_H_
 

@@ -1,15 +1,15 @@
-peek -z
-peek -o
-peek -ol
 exit
-warp ..; peek
-warp .. &;peek ..
-warp ..&;peek .
-peek .&warp ..
-warp ..&peek ..
-warp -&peek project1
-warp osn&peek .&
-warp academs&peek .&
-warp &; warp - &peek ..
+seek -ehd .test
 exit
-warp ..&
+seek -ehd .test
+exit
+seek -ehd .test
+seek -el hello
+exit
+seek -el hello
+exit
+seek -fe main.c
+exit
+seek -fe main.c
+exit
+seek -fe main.c

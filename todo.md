@@ -1,13 +1,13 @@
 - [x] prompt
-- [ ] strtok
-- [ ] spec2
-- [-] warp
-- [ ] warp multi
-- [-] peek
-- [ ] peek flags
+- [x] strtok
+- [x] spec2
+- [x] warp
+- [x] warp multi
+- [x] peek
+- [x] peek flags
 - [x] pastevents
-- [ ] pastevents purge
-- [ ] pastevents execute
+- [x] pastevents purge
+- [x] pastevents execute
 - [ ] spec6
 - [ ] proclore fgbg
-- [ ] seek
+- [-] seek

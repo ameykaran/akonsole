@@ -3,9 +3,30 @@
 char HOME_DIR[PATH_MAX] = {}, CURR_DIR[PATH_MAX] = {}, PREV_DIR[PATH_MAX] = {};
 long TERMINAL_PID;
 
+// char *name = "naem";
+// static int
+// display_info(const char *fpath, const struct stat *sb,
+//              int tflag, struct FTW *ftwbuf)
+// {
+//     if (!strcmp(name, fpath + ftwbuf->base))
+//         printf("%-3s %2d %7jd   %-40s %d %s\n",
+//                (tflag == FTW_D) ? "d" : (tflag == FTW_DNR) ? "dnr"
+//                                     : (tflag == FTW_DP)    ? "dp"
+//                                     : (tflag == FTW_F)     ? "f"
+//                                     : (tflag == FTW_NS)    ? "ns"
+//                                     : (tflag == FTW_SL)    ? "sl"
+//                                     : (tflag == FTW_SLN)   ? "sln"
+//                                                            : "???",
+//                ftwbuf->level, sb->st_size,
+//                fpath, ftwbuf->base, fpath + ftwbuf->base);
+//     else
+//         printf(" ");
+//     return 0; /* To tell nftw() to continue */
+// }
+
 int main()
 {
-    system("clear");
+    printf("\033c");
 
     if (!getcwd(HOME_DIR, PATH_MAX))
     {
@@ -15,6 +36,13 @@ int main()
 
     strcpy(CURR_DIR, HOME_DIR);
     TERMINAL_PID = getpid();
+
+    // nftw(get_abs_path(".", 1), display_info, 20, FTW_PHYS);
+    // find("hello", ".");
+
+    // printf("%s\n", trim("prefix", "pre"));
+
+    // find(currPath, name, flags, count, rootPath, execPath);
 
     char buffer[ARG_MAX];
     while (1)

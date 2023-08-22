@@ -15,8 +15,13 @@
 
 - [x] Implement the normal and detailed versions
 - [ ] Handle errors
-- [ ] Add flags
+- [x] Add flags
 
+
+
+seek
+symlinks supported
+hidden files also searched
 
 
 

@@ -10,7 +10,6 @@ int warpHandler(const char *args)
         cd("~", 0);
     while (arg)
     {
-        // printf("%s\n", arg);
         cd(arg, 0);
         arg = strtok(NULL, " ");
     }
@@ -68,6 +67,7 @@ int peekHandler(const char *args)
         strcpy(prev, ".");
     // printf("*%d*%d -%s\n", hidden, detailed, prev);
     ls(prev, hidden, detailed);
+    return 0;
 }
 
 int pasteventsHandler(const char *args)
@@ -120,7 +120,89 @@ int procloreHandler(const char *args)
     }
 }
 
-int seekHandler(const char *arg) {}
+int seekHandler(const char *args)
+{
+    char *arguments = strdup(args);
+    char *arg = strtok(arguments, " ");
+
+    char *name = (char *)calloc(PATH_MAX, sizeof(char));
+    char *path = (char *)calloc(PATH_MAX, sizeof(char));
+    char flags = 0;
+
+    while (arg)
+    {
+        if (arg[0] == '-')
+        {
+            for (int i = 1; i < strlen(arg); i++)
+            {
+                if (arg[i] == 'd')
+                    flags |= SEEK_DIR;
+                else if (arg[i] == 'f')
+                    flags |= SEEK_FILE;
+                else if (arg[i] == 'l')
+                    flags |= SEEK_LINK;
+                else if (arg[i] == 'e')
+                    flags |= SEEK_FLAG_EXEC;
+                else if (arg[i] == 'h')
+                    flags |= SEEK_FLAG_HIDDEN;
+                else
+                {
+                    print_error("Unknown flag");
+                    // Todo usage
+                    return 1;
+                }
+            }
+        }
+        else
+        {
+            if (flags & SEEK_FLAG_NAME)
+            {
+                strcpy(path, arg);
+                flags |= SEEK_FLAG_PATH;
+            }
+            else
+            {
+                strcpy(name, arg);
+                flags |= SEEK_FLAG_NAME;
+            }
+        }
+        arg = strtok(NULL, " ");
+    }
+
+    if ((SEEK_IS_DIR(flags) && SEEK_IS_FILE(flags)) ||
+        (SEEK_IS_DIR(flags) && SEEK_IS_LINK(flags)) ||
+        (SEEK_IS_LINK(flags) && SEEK_IS_FILE(flags)))
+    {
+        print_error("Invalid combination of flags");
+        // Todo usage
+        return 1;
+    }
+
+    if (name[0] == '\0')
+    {
+        print_error("Enter the entry to search for");
+        // Todo usage
+        return 1;
+    }
+
+    path = get_abs_path(path ? path : ".", 1);
+    if (strcmp(path, "/"))
+        path = rstrip(path, '/');
+
+    if (!(SEEK_IS_DIR(flags) | SEEK_IS_FILE(flags) | SEEK_IS_LINK(flags)))
+        flags |= SEEK_DIR | SEEK_FILE | SEEK_LINK;
+
+    // printf("%c", SEEK_IS_FILE(flags) ? 'f' : '\0');
+    // printf("%c", SEEK_IS_DIR(flags) ? 'd' : '\0');
+    // printf("%c", SEEK_IS_LINK(flags) ? 'l' : '\0');
+    // printf("%c", flags & SEEK_FLAG_EXEC ? 'e' : '\0');
+    // printf("%c", flags & SEEK_FLAG_NAME ? 'n' : '\0');
+    // printf("%c", flags & SEEK_FLAG_PATH ? 'p' : '\0');
+    // printf("%c", flags & SEEK_FLAG_HIDDEN ? 'h' : '\0');
+    // printf("\n");
+
+    seek(path, flags, name);
+}
 
 int exitHandler()
 {

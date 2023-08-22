@@ -157,10 +157,10 @@ char *replace_pastevents_execute(char *arg)
         arg = newCmd;
     }
 
-    deallocate_memory(pair->history);
+        deallocate_memory(pair->history);
     free(pair);
 
-    return strip(strip(arg, '\n'), ' ');
+    return strip(strip(rstrip(arg, ';'), '\n'), ' ');
 }
 
 char *replace_pastevents(char *arg)
