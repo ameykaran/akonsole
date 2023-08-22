@@ -28,6 +28,8 @@ int main()
 {
     printf("\033c");
 
+    printLogo();
+
     if (!getcwd(HOME_DIR, PATH_MAX))
     {
         printf("Unable to determine the home directory!");
@@ -36,13 +38,6 @@ int main()
 
     strcpy(CURR_DIR, HOME_DIR);
     TERMINAL_PID = getpid();
-
-    // nftw(get_abs_path(".", 1), display_info, 20, FTW_PHYS);
-    // find("hello", ".");
-
-    // printf("%s\n", trim("prefix", "pre"));
-
-    // find(currPath, name, flags, count, rootPath, execPath);
 
     char buffer[ARG_MAX];
     while (1)

@@ -45,4 +45,5 @@ extern char CURR_DIR[PATH_MAX];
 extern char PREV_DIR[PATH_MAX];
 extern long TERMINAL_PID;
 
+void printLogo();
 #endif

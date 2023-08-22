@@ -189,14 +189,3 @@ void ls(char *arg, int isHidden, int isFullInfo)
     free(path);
     free(entries);
 }
-
-
-/*
-ino - 1455232
-stmode 41471
-
-stmode 16877
-
-
-
-*/
