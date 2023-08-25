@@ -11,3 +11,8 @@
 - [x] spec6
 - [x] proclore fgbg
 - [x] seek
+
+
+test seek 
+no match
+prefix

@@ -1,15 +1,15 @@
-sleep 4 &
-cat
-warp ..
-ls &
-k
+sleep 5
+sleep 2; sleep 5; sleep 3
+peek -
 exit
-warp &
-peek &
-ls &
-peek &
-seek
-sleep 1 & sleep 2&
-proclore 3
+seek main
+seek debug /
+seek hello ..
+seek m
+seek -l m
 exit
-sudo su
+seek n
+seek a
+seek i
+seek -e i
+exit

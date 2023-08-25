@@ -32,9 +32,8 @@ void seek_recursive(char *basePath, char *name, int flags, int *count, char *roo
             strcat(currPath, direntry->d_name);
             stat(direntry->d_name, &info);
 
-            if (!strcmp(direntry->d_name, name))
+            if (!strncmp(direntry->d_name, name, strlen(name)))
             {
-
                 char *relPath = trim(currPath, rootPath);
                 relPath = relPath - 2;
                 relPath[0] = '.';
@@ -159,6 +158,8 @@ void seek(char *path, int flags, char *name)
             change_directory(execPath, 1);
         // }
     }
+    else if (count == 0)
+        printf("No match found!\n");
 
     free(path);
     free(name);

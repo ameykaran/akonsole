@@ -4,21 +4,21 @@ void execute_single_line_command(char *cmd);
 
 int warpHandler(const char *args)
 {
-    char *arguments = strdup(args);
-    char *arg = strtok(arguments, " ");
+    char *arguments = strdup(args), *temp;
+    char *arg = strtok_r(arguments, " ", &temp);
     if (!arg)
         cd("~", 0);
     while (arg)
     {
         cd(arg, 0);
-        arg = strtok(NULL, " ");
+        arg = strtok_r(NULL, " ", &temp);
     }
 }
 
 int peekHandler(const char *args)
 {
-    char *arguments = strdup(args);
-    char *arg = strtok(arguments, " ");
+    char *arguments = strdup(args), *temp;
+    char *arg = strtok_r(arguments, " ", &temp);
     int hidden = 0, detailed = 0;
     char prev[PATH_MAX] = {0};
     while (arg)
@@ -60,7 +60,7 @@ int peekHandler(const char *args)
             }
         }
         strcpy(prev, arg);
-        arg = strtok(NULL, " ");
+        arg = strtok_r(NULL, " ", &temp);
     }
 
     if (prev[0] == '-')
@@ -122,8 +122,8 @@ int procloreHandler(const char *args)
 
 int seekHandler(const char *args)
 {
-    char *arguments = strdup(args);
-    char *arg = strtok(arguments, " ");
+    char *arguments = strdup(args), *temp;
+    char *arg = strtok_r(arguments, " ", &temp);
 
     char *name = (char *)calloc(PATH_MAX, sizeof(char));
     char *path = (char *)calloc(PATH_MAX, sizeof(char));
@@ -166,7 +166,7 @@ int seekHandler(const char *args)
                 flags |= SEEK_FLAG_NAME;
             }
         }
-        arg = strtok(NULL, " ");
+        arg = strtok_r(NULL, " ", &temp);
     }
 
     if ((SEEK_IS_DIR(flags) && SEEK_IS_FILE(flags)) ||
@@ -192,15 +192,6 @@ int seekHandler(const char *args)
     if (!(SEEK_IS_DIR(flags) | SEEK_IS_FILE(flags) | SEEK_IS_LINK(flags)))
         flags |= SEEK_DIR | SEEK_FILE | SEEK_LINK;
 
-    // printf("%c", SEEK_IS_FILE(flags) ? 'f' : '\0');
-    // printf("%c", SEEK_IS_DIR(flags) ? 'd' : '\0');
-    // printf("%c", SEEK_IS_LINK(flags) ? 'l' : '\0');
-    // printf("%c", flags & SEEK_FLAG_EXEC ? 'e' : '\0');
-    // printf("%c", flags & SEEK_FLAG_NAME ? 'n' : '\0');
-    // printf("%c", flags & SEEK_FLAG_PATH ? 'p' : '\0');
-    // printf("%c", flags & SEEK_FLAG_HIDDEN ? 'h' : '\0');
-    // printf("\n");
-
     seek(path, flags, name);
 }
 
@@ -213,8 +204,8 @@ int exitHandler()
 int sysCmdHandler(const char *args)
 {
 
-    char *arguments = strdup(args);
-    char *arg = strtok(arguments, " ");
+    char *arguments = strdup(args), *temp;
+    char *arg = strtok_r(arguments, " ", &temp);
 
     char *argList[1024] = {NULL};
     int argCount = 0;
@@ -222,7 +213,7 @@ int sysCmdHandler(const char *args)
     while (arg)
     {
         argList[argCount++] = strdup(arg);
-        arg = strtok(NULL, " ");
+        arg = strtok_r(NULL, " ", &temp);
     }
     argList[argCount] = NULL;
 
@@ -291,15 +282,15 @@ void execute_multi_line_command(char *cmd)
 
     save_command(arg);
 
-    char delim[2] = ";";
-    char *command = strtok(arg, delim);
+    char *temp;
+    char *command = strtok_r(arg, ";", &temp);
 
     // CommandsList commandList = {NULL, NULL};
     while (command)
     {
         // enqueueList(&commandList, strip(strdup(command), ' '));
         execute_single_line_command(strip(strdup(command), ' '));
-        command = strtok(NULL, delim);
+        command = strtok_r(NULL, ";", &temp);
     }
 
     // CommandNode *head = commandList.head;
@@ -335,6 +326,7 @@ void split_raw_command(char *cmd, char **exec, char **args)
 int execute_foreground(cmdMap *evaluatedCmd, char *rawCmd)
 {
     // printf("Foreground Process %s\n", rawCmd);
+
     int pid = fork();
     if (pid < 0)
     {
@@ -343,19 +335,6 @@ int execute_foreground(cmdMap *evaluatedCmd, char *rawCmd)
     }
     else if (pid == 0)
     {
-        // printf("Child Process %d executing %s\n", getpid(), evaluatedCmd->cmdName);
-
-        // if (evaluatedCmd->cmdID != UNKNOWN)
-
-        // {
-        //     char *exec = NULL, *args = NULL;
-        //     split_raw_command(rawCmd, &exec, &args);
-        //     evaluatedCmd->handler(args);
-        //     return 0;
-        // }
-
-        // else
-        // char dup[1024] = {0};
         (evaluatedCmd->handler)(rawCmd);
 
         printf(ANSI_FG_COLOR_YELLOW);
@@ -371,11 +350,7 @@ int execute_foreground(cmdMap *evaluatedCmd, char *rawCmd)
     else
     {
         int status;
-        // printf("Parent Process %d waiting for %d\n", getpid(), pid);
         waitpid(pid, &status, 0);
-        // printf("Returned %s\n", (WEXITSTATUS(status) == 0) ? "success" : "failure");
-
-        // printf("Child Process %d exited with status %d\n\n", pid, status);
         return 0;
     }
 }
@@ -393,7 +368,8 @@ int execute_background(cmdMap *evaluatedCmd, char *rawCmd)
     else if (pid == 0)
     {
         // wait(NULL);
-        FILE *outputFile = fopen("/home/amey/output", "w");
+        // FILE *outputFile = fopen("/home/amey/output", "w");
+        FILE *outputFile = fopen(PREV_COMMAND_OUTPUT, "w");
         if (outputFile == NULL)
         {
             perror("fopen");
@@ -408,14 +384,6 @@ int execute_background(cmdMap *evaluatedCmd, char *rawCmd)
 
         fclose(outputFile);
 
-        // if (evaluatedCmd->cmdID != UNKNOWN )
-        // {
-        //     char *exec = NULL, *args = NULL;
-        //     split_raw_command(rawCmd, &exec, &args);
-        //     evaluatedCmd->handler(args);
-        //     return 0;
-        // }
-        // else
         (evaluatedCmd->handler)(rawCmd);
 
         printf(ANSI_FG_COLOR_YELLOW);
@@ -435,6 +403,7 @@ int execute_background(cmdMap *evaluatedCmd, char *rawCmd)
         return 0;
     }
 }
+
 void run_single_command(char *command, int isBg)
 {
     char *rawCmd = strdup(command);
@@ -536,7 +505,8 @@ void execute_single_line_command(char *cmd)
 void print_last_exec_output()
 {
     long bytes = 0;
-    FILE *output = fopen("/home/amey/output", "a+");
+    // FILE *output = fopen("/home/amey/output", "a+");
+    FILE *output = fopen(PREV_COMMAND_OUTPUT, "a+");
     if (output < 0)
     {
         print_error("Not able to open previous output buffer");
@@ -559,7 +529,8 @@ void print_last_exec_output()
             printf("\n");
         fclose(output);
     }
-    output = fopen("/home/amey/output", "w");
+    output = fopen(PREV_COMMAND_OUTPUT, "w");
+    // output = fopen("/home/amey/output", "w");
     if (output < 0)
     {
         print_error("Not able to open previous output buffer");
@@ -587,9 +558,9 @@ void kill_children(int id)
         }
 
         if (status == 0)
-            printf("[%d] %d exited " ANSI_FG_COLOR_GREEN " successfully" ANSI_COLOR_RESET "\t%s\n", bgProcesses->size - 1, pid, process->pName);
+            printf("[%d] %d exited " ANSI_FG_COLOR_GREEN "successfully" ANSI_FG_COLOR_YELLOW "\t%s\n" ANSI_COLOR_RESET, bgProcesses->size - 1, pid, process->pName);
         else
-            printf("[%d] %d exited " ANSI_FG_COLOR_RED " abnormally " ANSI_COLOR_RESET " with error: %d\t%s\n", bgProcesses->size - 1, pid, status, process->pName);
+            printf("[%d] %d exited " ANSI_FG_COLOR_RED "abnormally " ANSI_COLOR_RESET "with error: %d\t" ANSI_FG_COLOR_YELLOW "%s\n" ANSI_COLOR_RESET, bgProcesses->size - 1, pid, status, process->pName);
         remove_process_with_id(pid);
     }
 }
@@ -606,4 +577,5 @@ void kill_terminal(int id)
         }
 
     execute_foreground(evaluatedCmd, "exit");
+    prompt();
 }
