@@ -8,6 +8,6 @@
 - [x] pastevents
 - [x] pastevents purge
 - [x] pastevents execute
-- [ ] spec6
-- [ ] proclore fgbg
-- [-] seek
+- [x] spec6
+- [x] proclore fgbg
+- [x] seek

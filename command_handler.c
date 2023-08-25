@@ -20,7 +20,7 @@ int peekHandler(const char *args)
     char *arguments = strdup(args);
     char *arg = strtok(arguments, " ");
     int hidden = 0, detailed = 0;
-    char prev[PATH_MAX];
+    char prev[PATH_MAX] = {0};
     while (arg)
     {
         if (arg[0] == '-')
@@ -466,7 +466,7 @@ void run_single_command(char *command, int isBg)
     if (evaluatedCmd->cmdID != UNKNOWN)
     {
         char *exec = NULL, *args = NULL;
-        split_raw_command(command, &exec, &args);
+        split_raw_command(strdup(command), &exec, &args);
         evaluatedCmd->handler(args);
     }
     else
@@ -477,7 +477,29 @@ void run_single_command(char *command, int isBg)
             execute_foreground(evaluatedCmd, command);
         endTime = time(NULL);
         if (!isBg)
+        {
             printf(ANSI_FG_COLOR_YELLOW "\n%s " ANSI_COLOR_RESET "ran in " ANSI_FG_COLOR_MAGENTA "%lds" ANSI_COLOR_RESET "\n\n", exec, endTime - srtTime);
+
+            if (endTime - srtTime > 2)
+            {
+                int i = 0;
+                char *dup = strdup(command);
+
+                while (dup && dup[i] != ' ')
+                    i++;
+
+                dup[i] = '\0';
+
+                strcpy(PREV_COMMAND, " " ANSI_FG_COLOR_YELLOW);
+                strcat(PREV_COMMAND, dup);
+                strcat(PREV_COMMAND, ANSI_COLOR_RESET ":" ANSI_FG_COLOR_MAGENTA);
+
+                char time[100];
+                sprintf(time, "%lds", endTime - srtTime);
+                strcat(PREV_COMMAND, time);
+                strcat(PREV_COMMAND, "" ANSI_COLOR_RESET);
+            }
+        }
     }
     return;
 }
@@ -531,7 +553,7 @@ void print_last_exec_output()
         }
 
         // printf("%s", PREV_COMMAND_OUTPUT);
-        PREV_COMMAND_OUTPUT[0] = '\0';
+        // PREV_COMMAND_OUTPUT[0] = '\0';
 
         if (bytes)
             printf("\n");
@@ -551,19 +573,6 @@ void print_last_exec_output()
 
 void kill_children(int id)
 {
-    // printf("Sighandler %ld \n", bgProcesses);
-
-    // processNode *head = bgProcesses->head;
-    // // processNode * next;
-    // while (head)
-    // {
-    //     // next = head->next;
-    //     // kill(head->pid, SIGKILL);
-    //     // remove_process_with_id(head->pid);
-    //     printf("%d %s --> ", head->pid, head->pName);
-    //     head = head->next;
-    // }
-
     dup2(STDOUT_FILENO, STDOUT_FILENO);
 
     int status, pid;
@@ -578,9 +587,9 @@ void kill_children(int id)
         }
 
         if (status == 0)
-            printf("[%d] %d exited " ANSI_FG_COLOR_GREEN " successfully" ANSI_COLOR_RESET "\t%s\n", bgProcesses->size, pid, process->pName);
+            printf("[%d] %d exited " ANSI_FG_COLOR_GREEN " successfully" ANSI_COLOR_RESET "\t%s\n", bgProcesses->size - 1, pid, process->pName);
         else
-            printf("[%d] %d exited " ANSI_FG_COLOR_RED " abnormally " ANSI_COLOR_RESET " with error: %d\t%s\n", bgProcesses->size, pid, status, process->pName);
+            printf("[%d] %d exited " ANSI_FG_COLOR_RED " abnormally " ANSI_COLOR_RESET " with error: %d\t%s\n", bgProcesses->size - 1, pid, status, process->pName);
         remove_process_with_id(pid);
     }
 }

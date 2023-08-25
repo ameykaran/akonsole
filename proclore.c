@@ -11,10 +11,12 @@ void proclore(long pid)
     if (!statusFile)
     {
         print_error("Error opening status file");
-        exit(EXIT_FAILURE);
+        return;
     }
 
-    procInfo info;
+    long tcpgid = tcgetpgrp(STDOUT_FILENO);
+
+    procInfo info = {0};
     char buffer[1024];
 
     while (fgets(buffer, 1024, statusFile))
@@ -33,18 +35,14 @@ void proclore(long pid)
     snprintf(executablePath, 1024, "/proc/%ld/exe", pid);
     realpath(executablePath, info.exec);
 
-    printf("Process id: %ld\n", info.pid);
-    long pgid = getpgid(info.pid);
-    printf("Process group id - %ld\n", pgid);
-    printf("Terminal id - %ld\n", TERMINAL_PID);
-    printf("Terminal group id - %ld\n", getpgid(TERMINAL_PID));
+    info.fgbg = (TERMINAL_PID == tcpgid ? '+' : ' ');
 
     printf("PID: %ld\n", info.pid);
     printf("Process Status: %c", info.status[0]);
     printf("%c\n", info.fgbg);
     printf("Process group: %ld\n", info.ppid);
     printf("Virtual Memory: %ld\n", info.vmsize);
-    printf("Executable: %s\n", info.exec);
+    printf("Executable: %s\n", get_rel_path(info.exec));
 
     fclose(statusFile);
 }

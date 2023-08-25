@@ -1,8 +1,13 @@
 # Command descriptions
+seek add prefix
+seek -z main.c
+
 
 ### prompt
 
 <Username@SystemName:~>
+
+
 
 ### peek
 - Colour coding
@@ -18,6 +23,10 @@
 - [x] Add flags
 
 
+### proclore
+- The executable path is an absolute path
+
+
 
 seek
 symlinks supported
@@ -28,11 +37,16 @@ hidden files also searched
 seek doesnot follow the symlinks
 
 
+
+
 # Assumptions
 - The max len of any command can only be `ARG_MAX` bytes (131072 in my system)
 
 - The max len of username and system name should be `1024` bytes
 
+- A process is a foreground process if its process group id is equal to the terminal's pid
+
+-
 
 
 ## todo

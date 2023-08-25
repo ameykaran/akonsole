@@ -47,7 +47,7 @@ extern char HOME_DIR[PATH_MAX];
 extern char CURR_DIR[PATH_MAX];
 extern char PREV_DIR[PATH_MAX];
 extern long TERMINAL_PID;
-extern char PREV_COMMAND_OUTPUT[1024];
+extern char PREV_COMMAND[1024];
 extern processList *bgProcesses;
 
 void printLogo();

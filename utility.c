@@ -1,15 +1,17 @@
 #include "headers.h"
 
-char *rstrip(char *str, char letter)
+char *rstrip(char *string, char letter)
 {
+    char *str = strdup(string);
     int len = strlen(str);
     while (str[len - 1] == letter)
         str[--len] = '\0';
     return str;
 }
 
-char *lstrip(char *str, char letter)
+char *lstrip(char *string, char letter)
 {
+    char *str = strdup(string);
     int i = 0;
     while (str[i++] == letter)
         ;
@@ -50,7 +52,7 @@ char *get_abs_path(char *path, int expandDots)
         strcat(absPath, "/");
         path += 1;
     }
-    if (path[1] == '.' && path[0] == '.')
+    if (path[0] == '.' && path[1] == '.')
     {
         changed = 1;
         strcpy(absPath, CURR_DIR);
