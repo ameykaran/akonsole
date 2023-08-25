@@ -109,19 +109,29 @@ void print_file(char *path)
 
 void change_directory(char *path, int isLink)
 {
-    char error[100] = "Permission denied to ";
-
     if (access(path, X_OK))
     {
-        if (isLink)
-            strcat(error, "follow the symbolic link");
-        else
-            strcat(error, "open the directory");
-
-        print_error(error);
+        print_error("Permission denied to open the directory");
         return;
     }
     cd(path, 0);
+}
+
+void follow_link(char *path)
+{
+    if (access(path, X_OK))
+    {
+        print_error("Permission denied to follow the link");
+        return;
+    }
+
+    struct stat realisedStat;
+    stat(path, &realisedStat);
+
+    if (S_ISDIR(realisedStat.st_mode))
+        cd(path, 0);
+    else
+        print_file(path);
 }
 
 void seek(char *path, int flags, char *name)

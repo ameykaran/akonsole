@@ -2,33 +2,15 @@
 
 char HOME_DIR[PATH_MAX] = {}, CURR_DIR[PATH_MAX] = {}, PREV_DIR[PATH_MAX] = {};
 long TERMINAL_PID;
-
-// char *name = "naem";
-// static int
-// display_info(const char *fpath, const struct stat *sb,
-//              int tflag, struct FTW *ftwbuf)
-// {
-//     if (!strcmp(name, fpath + ftwbuf->base))
-//         printf("%-3s %2d %7jd   %-40s %d %s\n",
-//                (tflag == FTW_D) ? "d" : (tflag == FTW_DNR) ? "dnr"
-//                                     : (tflag == FTW_DP)    ? "dp"
-//                                     : (tflag == FTW_F)     ? "f"
-//                                     : (tflag == FTW_NS)    ? "ns"
-//                                     : (tflag == FTW_SL)    ? "sl"
-//                                     : (tflag == FTW_SLN)   ? "sln"
-//                                                            : "???",
-//                ftwbuf->level, sb->st_size,
-//                fpath, ftwbuf->base, fpath + ftwbuf->base);
-//     else
-//         printf(" ");
-//     return 0; /* To tell nftw() to continue */
-// }
+char PREV_COMMAND[1024] = {0};
+processList list;
+processList *bgProcesses = &list;
 
 int main()
 {
     printf("\033c");
 
-    printLogo();
+    // printLogo();
 
     if (!getcwd(HOME_DIR, PATH_MAX))
     {
@@ -39,11 +21,26 @@ int main()
     strcpy(CURR_DIR, HOME_DIR);
     TERMINAL_PID = getpid();
 
+    bgProcesses->head = NULL;
+    bgProcesses->tail = NULL;
+    bgProcesses->size = 0;
+
+    struct sigaction new_action = {0};
+
+    new_action.sa_handler = kill_children;
+    sigemptyset(&new_action.sa_mask);
+    new_action.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    sigaction(SIGCHLD, &new_action, NULL);
+
     char buffer[ARG_MAX];
     while (1)
     {
+
         prompt();
+        // printf("Main Processes %d\n", bgProcesses);
+
         fgets(buffer, ARG_MAX, stdin);
-        execute_multi_command(buffer);
+        print_last_exec_output();
+        execute_multi_line_command(buffer);
     }
 }

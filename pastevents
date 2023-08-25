@@ -1,15 +1,15 @@
-seek -fe main.c
-exit
-seek -fe main.c
-exit
-seek -fe main.c
-exit
-peek
-seek debug /
-exit
-seek debug /
-exit
-neofetch
-exit
-warp
+sleep 4 &
+cat
 warp ..
+ls &
+k
+exit
+warp &
+peek &
+ls &
+peek &
+seek
+sleep 1 & sleep 2&
+proclore 3
+exit
+sudo su

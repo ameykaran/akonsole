@@ -17,6 +17,8 @@
 #include <grp.h>
 #include <time.h>
 #include <ftw.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "prompt.h"
 #include "pastevents.h"
@@ -26,6 +28,7 @@
 #include "seek.h"
 #include "proclore.h"
 #include "command_handler.h"
+#include "fgbg.h"
 
 #define ANSI_FG_COLOR_BLACK "\x1b[30m"
 #define ANSI_FG_COLOR_RED "\x1b[31m"
@@ -44,6 +47,8 @@ extern char HOME_DIR[PATH_MAX];
 extern char CURR_DIR[PATH_MAX];
 extern char PREV_DIR[PATH_MAX];
 extern long TERMINAL_PID;
+extern char PREV_COMMAND_OUTPUT[1024];
+extern processList *bgProcesses;
 
 void printLogo();
 #endif

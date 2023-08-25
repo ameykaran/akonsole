@@ -21,6 +21,9 @@ typedef struct cmdMap
     execHandler handler;
 } cmdMap;
 
-void execute_multi_command(char *cmd);
+void execute_multi_line_command(char *cmd);
+void print_last_exec_output();
+void kill_children(int id);
+void kill_terminal(int id);
 
 #endif

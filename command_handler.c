@@ -1,6 +1,6 @@
 #include "headers.h"
 
-void execute_single_command(char *cmd);
+void execute_single_line_command(char *cmd);
 
 int warpHandler(const char *args)
 {
@@ -83,7 +83,7 @@ int pasteventsHandler(const char *args)
             return 1;
         }
 
-        execute_single_command(execCmd);
+        execute_single_line_command(execCmd);
         free(cmd);
         return 0;
     }
@@ -210,7 +210,27 @@ int exitHandler()
     exit(EXIT_SUCCESS);
 }
 
+int sysCmdHandler(const char *args)
+{
+
+    char *arguments = strdup(args);
+    char *arg = strtok(arguments, " ");
+
+    char *argList[1024] = {NULL};
+    int argCount = 0;
+
+    while (arg)
+    {
+        argList[argCount++] = strdup(arg);
+        arg = strtok(NULL, " ");
+    }
+    argList[argCount] = NULL;
+
+    execvp(argList[0], argList);
+}
+
 cmdMap cmdTable[] = {
+    {"", UNKNOWN, sysCmdHandler},
     {"warp", WARP, warpHandler},
     {"peek", PEEK, peekHandler},
     {"pastevents", PASTEVENTS, pasteventsHandler},
@@ -258,7 +278,7 @@ CommandNode *dequeueList(CommandsList *list, char *command)
     return start;
 }
 
-void execute_multi_command(char *cmd)
+void execute_multi_line_command(char *cmd)
 {
     char *arg = strdup(cmd);
     arg = remove_whitespaces(arg);
@@ -274,79 +294,195 @@ void execute_multi_command(char *cmd)
     char delim[2] = ";";
     char *command = strtok(arg, delim);
 
-    CommandsList commandList = {NULL, NULL};
+    // CommandsList commandList = {NULL, NULL};
     while (command)
     {
-        enqueueList(&commandList, strip(strdup(command), ' '));
+        // enqueueList(&commandList, strip(strdup(command), ' '));
+        execute_single_line_command(strip(strdup(command), ' '));
         command = strtok(NULL, delim);
     }
 
-    CommandNode *head = commandList.head;
-    CommandNode *next;
-    while (head)
+    // CommandNode *head = commandList.head;
+    // CommandNode *next;
+    // while (head)
+    // {
+    //     execute_single_line_command(head->data);
+    //     next = head->next;
+    //     free(head);
+    //     head = next;
+    // }
+}
+
+void split_raw_command(char *cmd, char **exec, char **args)
+{
+    char *rawCmd = strdup(cmd);
+
+    for (int i = 0; i < strlen(rawCmd); i++)
     {
-        execute_single_command(head->data);
-        next = head->next;
-        free(head);
-        head = next;
+        if (rawCmd[i] != ' ')
+            continue;
+        *exec = rawCmd;
+        *args = rawCmd + i + 1;
+        rawCmd[i] = '\0';
+    }
+
+    if (!exec[0])
+        *exec = rawCmd;
+    if (!args[0])
+        *args = strdup("");
+}
+
+int execute_foreground(cmdMap *evaluatedCmd, char *rawCmd)
+{
+    // printf("Foreground Process %s\n", rawCmd);
+    int pid = fork();
+    if (pid < 0)
+    {
+        print_error("Could not fork the terminal");
+        return 1;
+    }
+    else if (pid == 0)
+    {
+        // printf("Child Process %d executing %s\n", getpid(), evaluatedCmd->cmdName);
+
+        // if (evaluatedCmd->cmdID != UNKNOWN)
+
+        // {
+        //     char *exec = NULL, *args = NULL;
+        //     split_raw_command(rawCmd, &exec, &args);
+        //     evaluatedCmd->handler(args);
+        //     return 0;
+        // }
+
+        // else
+        // char dup[1024] = {0};
+        (evaluatedCmd->handler)(rawCmd);
+
+        printf(ANSI_FG_COLOR_YELLOW);
+        for (int i = 0; i < strlen(rawCmd); i++)
+        {
+            if (rawCmd[i] == ' ')
+                break;
+            printf("%c", rawCmd[i]);
+        }
+        print_error(" No such command found");
+        exit(0);
+    }
+    else
+    {
+        int status;
+        // printf("Parent Process %d waiting for %d\n", getpid(), pid);
+        waitpid(pid, &status, 0);
+        // printf("Returned %s\n", (WEXITSTATUS(status) == 0) ? "success" : "failure");
+
+        // printf("Child Process %d exited with status %d\n\n", pid, status);
+        return 0;
     }
 }
 
-int run_single_command(char *command, int isBg)
+int execute_background(cmdMap *evaluatedCmd, char *rawCmd)
 {
-    char *exec = 0;
-    char *args = 0;
+    // printf("Background Process %s\n", rawCmd);
 
-    for (int i = 0; i < strlen(command); i++)
+    int pid = fork();
+    if (pid < 0)
     {
-        if (command[i] != ' ')
+        print_error("Could not fork the terminal");
+        return 1;
+    }
+    else if (pid == 0)
+    {
+        // wait(NULL);
+        FILE *outputFile = fopen("/home/amey/output", "w");
+        if (outputFile == NULL)
+        {
+            perror("fopen");
+            return 1;
+        }
+        int fileDescriptor = fileno(outputFile);
+        if (dup2(fileDescriptor, STDOUT_FILENO) == -1)
+        {
+            perror("dup2");
+            return 1;
+        }
+
+        fclose(outputFile);
+
+        // if (evaluatedCmd->cmdID != UNKNOWN )
+        // {
+        //     char *exec = NULL, *args = NULL;
+        //     split_raw_command(rawCmd, &exec, &args);
+        //     evaluatedCmd->handler(args);
+        //     return 0;
+        // }
+        // else
+        (evaluatedCmd->handler)(rawCmd);
+
+        printf(ANSI_FG_COLOR_YELLOW);
+        for (int i = 0; i < strlen(rawCmd); i++)
+        {
+            if (rawCmd[i] == ' ')
+                break;
+            printf("%c", rawCmd[i]);
+        }
+        print_error(" No such command found");
+        exit(0);
+    }
+    else
+    {
+        insert_process(pid, rawCmd);
+        printf("[%d] %d\n", bgProcesses->size, pid);
+        return 0;
+    }
+}
+void run_single_command(char *command, int isBg)
+{
+    char *rawCmd = strdup(command);
+    char *exec = NULL;
+    for (int i = 0; i < strlen(rawCmd); i++)
+    {
+        if (rawCmd[i] != ' ')
             continue;
-        exec = command;
-        args = command + i + 1;
-        command[i] = '\0';
+        exec = rawCmd;
+        rawCmd[i] = '\0';
     }
-
-    if (!exec && !args)
-    {
-        exec = command;
-        args = strdup("");
-    }
+    exec = exec ? exec : rawCmd;
 
     cmdMap *evaluatedCmd = NULL;
     for (int i = 0; i < sizeof(cmdTable) / sizeof(cmdMap); i++)
-    {
         if (!strcmp(exec, cmdTable[i].cmdName))
         {
             evaluatedCmd = cmdTable + i;
             break;
         }
-    }
 
-    if (isBg)
+    evaluatedCmd = evaluatedCmd ? evaluatedCmd : cmdTable;
+    if (evaluatedCmd->cmdID == EXIT)
+        evaluatedCmd->handler("");
+
+    time_t srtTime = 0, endTime = 0;
+    srtTime = time(NULL);
+
+    if (evaluatedCmd->cmdID != UNKNOWN)
     {
-        int childPid = fork();
-        if (childPid == 0)
-        {
-            if (evaluatedCmd && evaluatedCmd->cmdID)
-            {
-                printf("Background Process\n");
-                (evaluatedCmd->handler)(args);
-                printf("\n");
-            }
-        }
+        char *exec = NULL, *args = NULL;
+        split_raw_command(command, &exec, &args);
+        evaluatedCmd->handler(args);
     }
     else
     {
-        if (evaluatedCmd && evaluatedCmd->cmdID)
-        {
-            printf("Foreground Process\n");
-            (evaluatedCmd->handler)(args);
-            printf("\n");
-        }
+        if (isBg)
+            execute_background(evaluatedCmd, command);
+        else
+            execute_foreground(evaluatedCmd, command);
+        endTime = time(NULL);
+        if (!isBg)
+            printf(ANSI_FG_COLOR_YELLOW "\n%s " ANSI_COLOR_RESET "ran in " ANSI_FG_COLOR_MAGENTA "%lds" ANSI_COLOR_RESET "\n\n", exec, endTime - srtTime);
     }
+    return;
 }
 
-void execute_single_command(char *cmd)
+void execute_single_line_command(char *cmd)
 {
     char *arg = strdup(cmd);
     arg = rstrip(arg, '\n');
@@ -363,6 +499,7 @@ void execute_single_command(char *cmd)
     char *bgCmd;
     char *temp;
     bgCmd = strtok_r(command, "&", &temp);
+
     while (ampCount)
     {
         run_single_command(strip(strdup(bgCmd), ' '), 1);
@@ -372,4 +509,92 @@ void execute_single_command(char *cmd)
 
     if (bgCmd)
         run_single_command(bgCmd, 0);
+}
+
+void print_last_exec_output()
+{
+    long bytes = 0;
+    FILE *output = fopen("/home/amey/output", "a+");
+    if (output < 0)
+    {
+        print_error("Not able to open previous output buffer");
+        return;
+    }
+
+    if (output)
+    {
+        char buffer[1024];
+        while (fgets(buffer, 1024, output))
+        {
+            printf("%s", buffer);
+            bytes += strlen(buffer);
+        }
+
+        // printf("%s", PREV_COMMAND_OUTPUT);
+        PREV_COMMAND_OUTPUT[0] = '\0';
+
+        if (bytes)
+            printf("\n");
+        fclose(output);
+    }
+    output = fopen("/home/amey/output", "w");
+    if (output < 0)
+    {
+        print_error("Not able to open previous output buffer");
+        return;
+    }
+    fputs("", output);
+    fclose(output);
+
+    return;
+}
+
+void kill_children(int id)
+{
+    // printf("Sighandler %ld \n", bgProcesses);
+
+    // processNode *head = bgProcesses->head;
+    // // processNode * next;
+    // while (head)
+    // {
+    //     // next = head->next;
+    //     // kill(head->pid, SIGKILL);
+    //     // remove_process_with_id(head->pid);
+    //     printf("%d %s --> ", head->pid, head->pName);
+    //     head = head->next;
+    // }
+
+    dup2(STDOUT_FILENO, STDOUT_FILENO);
+
+    int status, pid;
+    if ((pid = waitpid(-1, &status, WNOHANG)) > 0)
+    {
+        printf("%d\n", pid);
+        processNode *process = get_process_with_id(pid);
+        if (!process)
+        {
+            print_error("Could not find process ");
+            return;
+        }
+
+        if (status == 0)
+            printf("[%d] %d exited " ANSI_FG_COLOR_GREEN " successfully" ANSI_COLOR_RESET "\t%s\n", bgProcesses->size, pid, process->pName);
+        else
+            printf("[%d] %d exited " ANSI_FG_COLOR_RED " abnormally " ANSI_COLOR_RESET " with error: %d\t%s\n", bgProcesses->size, pid, status, process->pName);
+        remove_process_with_id(pid);
+    }
+}
+
+void kill_terminal(int id)
+
+{
+    cmdMap *evaluatedCmd = NULL;
+    for (int i = 0; i < sizeof(cmdTable) / sizeof(cmdMap); i++)
+        if (!strcmp("exit", cmdTable[i].cmdName))
+        {
+            evaluatedCmd = cmdTable + i;
+            break;
+        }
+
+    execute_foreground(evaluatedCmd, "exit");
 }

@@ -16,14 +16,14 @@ char *print_uptime(long timeElapsed)
         sprintf(buffer, "%ld hour", hours);
         strcpy(timeText, buffer);
     }
-    if (hours != 1)
+    if (hours != 0 && hours != 1)
         strcat(timeText, "s");
     if (minutes)
     {
         sprintf(buffer, " %ld min", minutes);
         strcat(timeText, buffer);
     }
-    if (minutes != 1)
+    if (minutes != 0 && minutes != 1)
         strcat(timeText, "s");
     if (seconds)
     {
@@ -47,7 +47,7 @@ void printLogo()
         "\n"
         "          .??.    ~J?J?.      \n"
         "         :G@@^  :5@@@B~       \n"
-        "        :B@@&E\\.7#@@&?        Welcome to AKonsole\n" ANSI_FG_COLOR_BLUE
+        "        :B@@&E\\.7#@@&?        Welcome to " ANSI_FG_COLOR_YELLOW "AKonsole\n" ANSI_FG_COLOR_BLUE
         "       ^#@@; ^P@@@5:            " ANSI_COLOR_RESET " new age terminal!\n" ANSI_FG_COLOR_BLUE
         "      ^#@@:   @@@#^           OS:     " ANSI_COLOR_RESET;
 
