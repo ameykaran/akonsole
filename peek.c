@@ -1,6 +1,6 @@
 #include "headers.h"
 
-void get_info(struct dirent *direntry, struct stat stat, directEntry *entries, int ind, int *maxSize)
+void get_info(struct dirent *direntry, struct stat stat, directEntry *entries, int ind, int *maxNLinks, int *maxSize)
 {
     if (S_ISLNK(stat.st_mode))
         entries[ind].perms[0] = 'l';
@@ -32,6 +32,7 @@ void get_info(struct dirent *direntry, struct stat stat, directEntry *entries, i
 
     strcpy(entries[ind].name, direntry->d_name);
 
+    *maxNLinks = max(*maxNLinks, stat.st_nlink);
     *maxSize = max(*maxSize, stat.st_size);
 }
 
@@ -64,12 +65,18 @@ void print_entries(directEntry *entries, int count)
     }
 }
 
-void print_detailed(directEntry *entries, int count, int maxSize)
+void print_detailed(directEntry *entries, int count, int maxNLinks, int maxSize)
 {
-    int digits = 0;
+    int digNlinks = 0;
+    while (maxNLinks)
+    {
+        digNlinks += 1;
+        maxNLinks /= 10;
+    }
+    int digSize = 0;
     while (maxSize)
     {
-        digits += 1;
+        digSize += 1;
         maxSize /= 10;
     }
 
@@ -78,11 +85,11 @@ void print_detailed(directEntry *entries, int count, int maxSize)
     {
         directEntry entry = entries[i];
         printf("%s ", entry.perms);
-        printf("%ld ", entry.numLinks);
+        print_aligned(entry.numLinks, digNlinks);
         printf("%s ", entry.user);
         printf("%s ", entry.group);
 
-        print_aligned(entry.size, digits);
+        print_aligned(entry.size, digSize);
 
         char *time = ctime(&entry.timeCreated);
         time = time + 4;
@@ -123,9 +130,9 @@ void ls(char *arg, int isHidden, int isFullInfo)
 {
     char *path = strdup(arg);
     path = strip(path, ' ');
-    path = get_abs_path(path, 1);
+    path = get_abs_path(path);
 
-    cd(path, 1);
+    // cd(path, 1);
 
     DIR *dir = opendir(path);
     if (!dir)
@@ -151,7 +158,7 @@ void ls(char *arg, int isHidden, int isFullInfo)
     int count = 0;
     struct dirent *direntry;
     errno = 0;
-    int maxSize = 0;
+    int maxNLinks = 0, maxSize = 0;
 
     while (direntry = readdir(dir))
     {
@@ -168,7 +175,7 @@ void ls(char *arg, int isHidden, int isFullInfo)
         struct stat stat;
         lstat(entryName, &stat);
 
-        get_info(direntry, stat, entries, count, &maxSize);
+        get_info(direntry, stat, entries, count, &maxNLinks, &maxSize);
         count++;
 
         if (count >= maxEntries)
@@ -180,11 +187,11 @@ void ls(char *arg, int isHidden, int isFullInfo)
     qsort(entries, count, sizeof(directEntry), comparator);
 
     if (isFullInfo)
-        print_detailed(entries, count, maxSize);
+        print_detailed(entries, count, maxNLinks, maxSize);
     else
         print_entries(entries, count);
 
-    cd(PREV_DIR, 1);
+    // cd(PREV_DIR, 1);
 
     free(path);
     free(entries);

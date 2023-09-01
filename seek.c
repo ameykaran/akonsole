@@ -81,7 +81,6 @@ void seek_recursive(char *basePath, char *name, int flags, int *count, char *roo
 
 void print_file(char *path)
 {
-
     if (access(path, R_OK))
     {
         print_error("Permission denied to read the file");
@@ -143,20 +142,11 @@ void seek(char *path, int flags, char *name)
     if (count == 1 && flags & SEEK_FLAG_EXEC)
     {
         if (execType == SEEK_DIR)
-            // {
-            // printf("changing dir to  %s\n", execPath);
             change_directory(execPath, 0);
-        // }
         else if (execType == SEEK_FILE)
-            // {
-            //     printf("printing %s\n", execPath);
             print_file(execPath);
-        // }
         else if (execType == SEEK_LINK)
-            // {
-            // printf("link to %s\n", execPath);
             change_directory(execPath, 1);
-        // }
     }
     else if (count == 0)
         printf("No match found!\n");

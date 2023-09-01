@@ -28,12 +28,14 @@ void print_error(char *msg)
     printf(ANSI_FG_COLOR_RED "%s" ANSI_COLOR_RESET "\n", msg);
 }
 
-char *get_abs_path(char *path, int expandDots)
+
+/*Get the absolute path of the given argument. Can return null path. Free the argument when possible*/
+char *get_abs_path(char *path)
 {
     char *absPath = (char *)calloc(PATH_MAX, sizeof(char));
-    int changed = 0;
+    // int changed = 0;
 
-    if ((path[0] == '/') || (!expandDots && path[0] == '.'))
+    if ((path[0] == '/') )
     {
         strcpy(absPath, path);
         return absPath;
@@ -47,46 +49,48 @@ char *get_abs_path(char *path, int expandDots)
 
     if (path[0] == '~')
     {
-        changed = 1;
+        // changed = 1;
         strcpy(absPath, HOME_DIR);
         strcat(absPath, "/");
         path += 1;
     }
-    if (path[0] == '.' && path[1] == '.')
-    {
-        changed = 1;
-        strcpy(absPath, CURR_DIR);
-        if (!strcmp(absPath, "~"))
-            strcpy(absPath, HOME_DIR);
-        for (int j = strlen(absPath) - 1; j > -1; j--)
-            if (absPath[j] == '/')
-            {
-                absPath[j] = '\0';
-                break;
-            }
-        strcat(absPath, "/");
-        path += 2;
-    }
-    else if (path[0] == '.')
-    {
-        changed = 1;
-        strcpy(absPath, CURR_DIR);
-        if (!strcmp(absPath, "~"))
-            strcpy(absPath, HOME_DIR);
-        strcat(absPath, "/");
-        path += 1;
-    }
 
-    if (!changed)
-    {
-        strcpy(absPath, CURR_DIR);
-        strcat(absPath, "/");
-        strcat(absPath, path);
-        return get_abs_path(absPath, 1);
-    }
+    strcat(absPath, path);
+    // if (path[0] == '.' && path[1] == '.')
+    // {
+    //     changed = 1;
+    //     strcpy(absPath, CURR_DIR);
+    //     if (!strcmp(absPath, "~"))
+    //         strcpy(absPath, HOME_DIR);
+    //     for (int j = strlen(absPath) - 1; j > -1; j--)
+    //         if (absPath[j] == '/')
+    //         {
+    //             absPath[j] = '\0';
+    //             break;
+    //         }
+    //     strcat(absPath, "/");
+    //     path += 2;
+    // }
+    // else if (path[0] == '.')
+    // {
+    //     changed = 1;
+    //     strcpy(absPath, CURR_DIR);
+    //     if (!strcmp(absPath, "~"))
+    //         strcpy(absPath, HOME_DIR);
+    //     strcat(absPath, "/");
+    //     path += 1;
+    // }
 
-    if (path[0] && path[1])
-        strcat(absPath, path + (changed ? 1 : 0));
+    // if (!changed)
+    // {
+    //     strcpy(absPath, CURR_DIR);
+    //     strcat(absPath, "/");
+    //     strcat(absPath, path);
+    //     return get_abs_path(absPath, 1);
+    // }
+
+    // if (path[0] && path[1])
+    //     strcat(absPath, path + (changed ? 1 : 0));
 
     return absPath;
 }

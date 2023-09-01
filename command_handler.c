@@ -185,14 +185,15 @@ int seekHandler(const char *args)
         return 1;
     }
 
-    path = get_abs_path(path ? path : ".", 1);
-    if (strcmp(path, "/"))
-        path = rstrip(path, '/');
+    char *newpath = get_abs_path(path ? path : ".");
+    free(path);
+    if (strcmp(newpath, "/"))
+        newpath = rstrip(newpath, '/');
 
     if (!(SEEK_IS_DIR(flags) | SEEK_IS_FILE(flags) | SEEK_IS_LINK(flags)))
         flags |= SEEK_DIR | SEEK_FILE | SEEK_LINK;
 
-    seek(path, flags, name);
+    seek(newpath, flags, name);
 }
 
 int exitHandler()
@@ -284,48 +285,31 @@ void execute_multi_line_command(char *cmd)
 
     char *temp;
     char *command = strtok_r(arg, ";", &temp);
-
-    // CommandsList commandList = {NULL, NULL};
     while (command)
     {
-        // enqueueList(&commandList, strip(strdup(command), ' '));
         execute_single_line_command(strip(strdup(command), ' '));
         command = strtok_r(NULL, ";", &temp);
     }
-
-    // CommandNode *head = commandList.head;
-    // CommandNode *next;
-    // while (head)
-    // {
-    //     execute_single_line_command(head->data);
-    //     next = head->next;
-    //     free(head);
-    //     head = next;
-    // }
 }
 
-void split_raw_command(char *cmd, char **exec, char **args)
+// void split_raw_command(char *cmd, char **exec, char **args)
+// {
+//     for (int i = 0; i < strlen(cmd); i++)
+//     {
+//         if (cmd[i] != ' ')
+//             continue;
+//         *exec = cmd;
+//         *args = cmd + i + 1;
+//         cmd[i] = '\0';
+//     }
+//     if (!exec[0])
+//         *exec = cmd;
+//     if (!args[0])
+//         *args = strdup("");
+// }
+
+int execute_command(execHandler handler, char *rawCmd, char isBg)
 {
-    char *rawCmd = strdup(cmd);
-
-    for (int i = 0; i < strlen(rawCmd); i++)
-    {
-        if (rawCmd[i] != ' ')
-            continue;
-        *exec = rawCmd;
-        *args = rawCmd + i + 1;
-        rawCmd[i] = '\0';
-    }
-
-    if (!exec[0])
-        *exec = rawCmd;
-    if (!args[0])
-        *args = strdup("");
-}
-
-int execute_foreground(cmdMap *evaluatedCmd, char *rawCmd)
-{
-    // printf("Foreground Process %s\n", rawCmd);
 
     int pid = fork();
     if (pid < 0)
@@ -335,87 +319,80 @@ int execute_foreground(cmdMap *evaluatedCmd, char *rawCmd)
     }
     else if (pid == 0)
     {
-        (evaluatedCmd->handler)(rawCmd);
-
-        printf(ANSI_FG_COLOR_YELLOW);
-        for (int i = 0; i < strlen(rawCmd); i++)
+        if (isBg)
         {
-            if (rawCmd[i] == ' ')
-                break;
-            printf("%c", rawCmd[i]);
+            FILE *outputFile = fopen(PREV_COMMAND_OUTPUT, "w");
+            if (outputFile == NULL)
+            {
+                perror("fopen");
+                return 1;
+            }
+            int fileDescriptor = fileno(outputFile);
+            if (dup2(fileDescriptor, STDOUT_FILENO) == -1)
+            {
+                perror("dup2");
+                return 1;
+            }
+
+            fclose(outputFile);
+
+            handler(rawCmd);
+
+            printf(ANSI_FG_COLOR_YELLOW);
+            for (int i = 0; i < strlen(rawCmd); i++)
+            {
+                if (rawCmd[i] == ' ')
+                    break;
+                printf("%c", rawCmd[i]);
+            }
+            print_error(" No such command found");
+            exit(0);
         }
-        print_error(" No such command found");
-        exit(0);
-    }
-    else
-    {
-        int status;
-        waitpid(pid, &status, 0);
-        return 0;
-    }
-}
-
-int execute_background(cmdMap *evaluatedCmd, char *rawCmd)
-{
-    // printf("Background Process %s\n", rawCmd);
-
-    int pid = fork();
-    if (pid < 0)
-    {
-        print_error("Could not fork the terminal");
-        return 1;
-    }
-    else if (pid == 0)
-    {
-        // wait(NULL);
-        // FILE *outputFile = fopen("/home/amey/output", "w");
-        FILE *outputFile = fopen(PREV_COMMAND_OUTPUT, "w");
-        if (outputFile == NULL)
+        else
         {
-            perror("fopen");
-            return 1;
-        }
-        int fileDescriptor = fileno(outputFile);
-        if (dup2(fileDescriptor, STDOUT_FILENO) == -1)
-        {
-            perror("dup2");
-            return 1;
-        }
+            handler(rawCmd);
 
-        fclose(outputFile);
-
-        (evaluatedCmd->handler)(rawCmd);
-
-        printf(ANSI_FG_COLOR_YELLOW);
-        for (int i = 0; i < strlen(rawCmd); i++)
-        {
-            if (rawCmd[i] == ' ')
-                break;
-            printf("%c", rawCmd[i]);
+            printf(ANSI_FG_COLOR_YELLOW);
+            for (int i = 0; i < strlen(rawCmd); i++)
+            {
+                if (rawCmd[i] == ' ')
+                    break;
+                printf("%c", rawCmd[i]);
+            }
+            print_error(" No such command found");
+            exit(0);
         }
-        print_error(" No such command found");
-        exit(0);
     }
     else
     {
         insert_process(pid, rawCmd);
-        printf("[%d] %d\n", bgProcesses->size, pid);
-        return 0;
+        if (isBg)
+            printf("[%d] %d\n", bgProcesses->size, pid);
+        else
+        {
+            int status;
+            waitpid(pid, &status, 0);
+            return 0;
+        }
     }
 }
 
-void run_single_command(char *command, int isBg)
+void run_single_command(char *cmd, int isBg)
 {
-    char *rawCmd = strdup(command);
-    char *exec = NULL;
-    for (int i = 0; i < strlen(rawCmd); i++)
+    char *exec = NULL, *args = NULL, *command = strdup(cmd);
+    for (int i = 0; i < strlen(command); i++)
     {
-        if (rawCmd[i] != ' ')
+        if (command[i] != ' ')
             continue;
-        exec = rawCmd;
-        rawCmd[i] = '\0';
+        exec = command;
+        args = command + i + 1;
+
+        command[i] = '\0';
     }
-    exec = exec ? exec : rawCmd;
+    if (!exec || !exec[0])
+        exec = command;
+    if (!args || !args[0])
+        args = strdup("");
 
     cmdMap *evaluatedCmd = NULL;
     for (int i = 0; i < sizeof(cmdTable) / sizeof(cmdMap); i++)
@@ -434,16 +411,12 @@ void run_single_command(char *command, int isBg)
 
     if (evaluatedCmd->cmdID != UNKNOWN)
     {
-        char *exec = NULL, *args = NULL;
-        split_raw_command(strdup(command), &exec, &args);
         evaluatedCmd->handler(args);
+        printf("\n");
     }
     else
     {
-        if (isBg)
-            execute_background(evaluatedCmd, command);
-        else
-            execute_foreground(evaluatedCmd, command);
+        execute_command(evaluatedCmd->handler, cmd, isBg);
         endTime = time(NULL);
         if (!isBg)
         {
@@ -452,7 +425,8 @@ void run_single_command(char *command, int isBg)
             if (endTime - srtTime > 2)
             {
                 int i = 0;
-                char *dup = strdup(command);
+                char *dup = exec;
+                // char *dup = strdup(command);
 
                 while (dup && dup[i] != ' ')
                     i++;
@@ -477,7 +451,7 @@ void execute_single_line_command(char *cmd)
 {
     char *arg = strdup(cmd);
     arg = rstrip(arg, '\n');
-    char *command = remove_whitespaces(arg);
+    char *command = trim(arg, ' ');
 
     if (!strcmp(command, ""))
         return;
@@ -499,7 +473,7 @@ void execute_single_line_command(char *cmd)
     }
 
     if (bgCmd)
-        run_single_command(bgCmd, 0);
+        run_single_command(strip(strdup(bgCmd), ' '), 0);
 }
 
 void print_last_exec_output()
@@ -522,15 +496,11 @@ void print_last_exec_output()
             bytes += strlen(buffer);
         }
 
-        // printf("%s", PREV_COMMAND_OUTPUT);
-        // PREV_COMMAND_OUTPUT[0] = '\0';
-
         if (bytes)
             printf("\n");
         fclose(output);
     }
     output = fopen(PREV_COMMAND_OUTPUT, "w");
-    // output = fopen("/home/amey/output", "w");
     if (output < 0)
     {
         print_error("Not able to open previous output buffer");
@@ -576,6 +546,6 @@ void kill_terminal(int id)
             break;
         }
 
-    execute_foreground(evaluatedCmd, "exit");
+    execute_command(evaluatedCmd->handler, "exit", 0);
     prompt();
 }

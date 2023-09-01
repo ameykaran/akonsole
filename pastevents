@@ -1,15 +1,15 @@
-sleep 5
-sleep 2; sleep 5; sleep 3
-peek -
 exit
-seek main
-seek debug /
-seek hello ..
-seek m
-seek -l m
+warp /usr
+ls -al
+warp /usr
+peek -al
+warp
+ls -al
+peek -al
+cd /boot
+warp /boot
+ls -al
+peek -al
 exit
-seek n
-seek a
-seek i
-seek -e i
-exit
+warp /boot
+peek -al

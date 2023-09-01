@@ -6,7 +6,7 @@ char *lstrip(char *str, char letter);
 char *rstrip(char *str, char letter);
 char *strip(char *str, char letter);
 void print_error(char *error);
-char *get_abs_path(char *path, int expandDots);
+char *get_abs_path(char *path);
 char *get_rel_path(char *path);
 char *remove_whitespaces(char *text);
 

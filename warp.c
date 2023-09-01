@@ -19,9 +19,9 @@ void cd(char *path, int printOutput)
         return;
     }
 
-    char *absPath = get_abs_path(path, 1);
+    char *absPath = get_abs_path(path);
 
-    if (chdir(get_abs_path(absPath, 0)) == -1)
+    if (chdir(absPath) == -1)
     {
         if (!printOutput)
         {
