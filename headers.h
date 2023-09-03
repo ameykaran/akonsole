@@ -29,6 +29,7 @@
 #include "proclore.h"
 #include "command_handler.h"
 #include "fgbg.h"
+#include "iman.h"
 
 #define ANSI_FG_COLOR_BLACK "\x1b[30m"
 #define ANSI_FG_COLOR_RED "\x1b[31m"
