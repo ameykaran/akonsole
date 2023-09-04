@@ -11,6 +11,7 @@ typedef enum customCommands
     PASTEVENTS,
     PROCLORE,
     SEEK,
+    IMAN,
     EXIT
 } customCommands;
 

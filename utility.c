@@ -28,14 +28,13 @@ void print_error(char *msg)
     printf(ANSI_FG_COLOR_RED "%s" ANSI_COLOR_RESET "\n", msg);
 }
 
-
 /*Get the absolute path of the given argument. Can return null path. Free the argument when possible*/
 char *get_abs_path(char *path)
 {
     char *absPath = (char *)calloc(PATH_MAX, sizeof(char));
     // int changed = 0;
 
-    if ((path[0] == '/') )
+    if ((path[0] == '/'))
     {
         strcpy(absPath, path);
         return absPath;
@@ -150,6 +149,6 @@ char *trim(char *string, char *prefix)
     int i = 0;
     while (new[i] == prefix[i])
         i++;
-    new = new + i + 1;
+    new = new + i + (i == 0 ? 0 : 1);
     return new;
 }

@@ -204,7 +204,6 @@ int exitHandler()
 
 int sysCmdHandler(const char *args)
 {
-
     char *arguments = strdup(args), *temp;
     char *arg = strtok_r(arguments, " ", &temp);
 
@@ -221,14 +220,42 @@ int sysCmdHandler(const char *args)
     execvp(argList[0], argList);
 }
 
+int imanHandler(const char *args)
+{
+    char cmd[BUFFER_SMALL] = {0};
+    char *temp;
+    int numArgs = 0;
+    char *arg = strtok_r(strdup(args), " ", &temp);
+    if (!arg)
+    {
+        print_error("Enter the command to get the manual for");
+        return 1;
+    }
+    strcpy(cmd, arg);
+    while (arg)
+    {
+        strcpy(cmd, arg);
+        numArgs++;
+        arg = strtok_r(NULL, " ", &temp);
+    }
+    if (numArgs > 1)
+    {
+        print_error("Enter only one command");
+        return 1;
+    }
+
+    get_man_page(cmd);
+}
+
 cmdMap cmdTable[] = {
     {"", UNKNOWN, sysCmdHandler},
+    {"exit", EXIT, exitHandler},
     {"warp", WARP, warpHandler},
     {"peek", PEEK, peekHandler},
     {"pastevents", PASTEVENTS, pasteventsHandler},
     {"proclore", PROCLORE, procloreHandler},
     {"seek", SEEK, seekHandler},
-    {"exit", EXIT, exitHandler}};
+    {"iman", IMAN, imanHandler}};
 
 typedef struct CommandNode
 {
@@ -272,6 +299,7 @@ CommandNode *dequeueList(CommandsList *list, char *command)
 
 void execute_multi_line_command(char *cmd)
 {
+    printf("Command: '%s'\n", cmd);
     char *arg = strdup(cmd);
     arg = remove_whitespaces(arg);
     arg = replace_pastevents_execute(arg);
@@ -310,7 +338,7 @@ void execute_multi_line_command(char *cmd)
 
 int execute_command(execHandler handler, char *rawCmd, char isBg)
 {
-
+    // printf("Command: '%s'\n", rawCmd);
     int pid = fork();
     if (pid < 0)
     {
@@ -451,7 +479,7 @@ void execute_single_line_command(char *cmd)
 {
     char *arg = strdup(cmd);
     arg = rstrip(arg, '\n');
-    char *command = trim(arg, ' ');
+    char *command = trim(arg, " ");
 
     if (!strcmp(command, ""))
         return;
@@ -538,14 +566,16 @@ void kill_children(int id)
 void kill_terminal(int id)
 
 {
-    cmdMap *evaluatedCmd = NULL;
-    for (int i = 0; i < sizeof(cmdTable) / sizeof(cmdMap); i++)
-        if (!strcmp("exit", cmdTable[i].cmdName))
-        {
-            evaluatedCmd = cmdTable + i;
-            break;
-        }
+    signal(id, SIG_IGN);
+    printf("Do you really want to quit? [y/n] ");
+    char c = getchar();
+    printf("*%d*%s*\n", c, &c);
 
-    execute_command(evaluatedCmd->handler, "exit", 0);
-    prompt();
+    if (c == 10)
+        signal(SIGINT, kill_terminal);
+    else if (c == 'y' || c == 'Y')
+        (cmdTable + 1)->handler("exit");
+    else
+        signal(SIGINT, kill_terminal);
+    // getchar();
 }

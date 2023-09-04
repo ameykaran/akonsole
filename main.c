@@ -29,17 +29,22 @@ int main()
     bgProcesses->tail = NULL;
     bgProcesses->size = 0;
 
-    struct sigaction new_action = {0};
+    struct sigaction bgProcessFinishSig = {0};
 
-    new_action.sa_handler = kill_children;
-    sigemptyset(&new_action.sa_mask);
-    new_action.sa_flags = SA_RESTART | SA_NOCLDSTOP;
-    sigaction(SIGCHLD, &new_action, NULL);
+    bgProcessFinishSig.sa_handler = kill_children;
+    sigemptyset(&bgProcessFinishSig.sa_mask);
+    bgProcessFinishSig.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    sigaction(SIGCHLD, &bgProcessFinishSig, NULL);
+
+    struct sigaction exitSig = {0};
+    exitSig.sa_handler = kill_terminal;
+    sigemptyset(&exitSig.sa_mask);
+    exitSig.sa_flags = 0;
+    sigaction(SIGINT, &exitSig, NULL);
 
     char buffer[ARG_MAX];
     while (1)
     {
-
         prompt();
         fgets(buffer, ARG_MAX, stdin);
         print_last_exec_output();

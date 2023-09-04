@@ -1,15 +1,15 @@
+A
+gcc test.c
+rm *.out
+rm a.out
+gcc test.c
+./a.out
 exit
-warp /usr
-ls -al
-warp /usr
-peek -al
-warp
-ls -al
-peek -al
-cd /boot
-warp /boot
-ls -al
-peek -al
+iman
+iman ds cdc dsc
+iman sleep
 exit
-warp /boot
-peek -al
+iman seek
+iman netflix
+iman connect
+iman netflix
