@@ -30,6 +30,7 @@
 #include "command_handler.h"
 #include "fgbg.h"
 #include "iman.h"
+#include "activities.h"
 
 #define ANSI_FG_COLOR_BLACK "\x1b[30m"
 #define ANSI_FG_COLOR_RED "\x1b[31m"
@@ -50,7 +51,7 @@ extern char PREV_DIR[PATH_MAX];
 extern long TERMINAL_PID;
 extern char PREV_COMMAND[1024];
 extern char PREV_COMMAND_OUTPUT[1024];
-extern processList *bgProcesses;
+extern processList *Processes;
 
 void printLogo();
 #endif

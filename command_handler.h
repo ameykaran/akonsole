@@ -12,6 +12,11 @@ typedef enum customCommands
     PROCLORE,
     SEEK,
     IMAN,
+    ACTIVITIES,
+    PING,
+    FG,
+    BG,
+    NEONATE,
     EXIT
 } customCommands;
 

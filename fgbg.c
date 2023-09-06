@@ -1,31 +1,31 @@
 #include "headers.h"
 
-void insert_process(int pid, char *cmd)
+void insert_process(int pid, char *cmd, char isBg)
 {
-    processNode *newNode = (processNode *)malloc(sizeof(processNode));
+    processNode *newNode = (processNode *)calloc(1, sizeof(processNode));
     newNode->pid = pid;
-
+    newNode->isBg = isBg;
+    newNode->spawnTime = time(NULL);
     strcpy(newNode->pName, cmd);
-    newNode->next = NULL;
 
-    if (bgProcesses->head == NULL)
+    if (Processes->head == NULL)
     {
-        bgProcesses->head = newNode;
-        bgProcesses->tail = newNode;
-        bgProcesses->size += 1;
+        Processes->head = newNode;
+        Processes->tail = newNode;
+        Processes->size += 1;
         return;
     }
 
-    bgProcesses->tail->next = newNode;
-    bgProcesses->tail = newNode;
+    Processes->tail->next = newNode;
+    Processes->tail = newNode;
 
-    bgProcesses->size += 1;
+    Processes->size += 1;
     return;
 }
 
 processNode *get_process_with_id(int pid)
 {
-    processNode *temp = bgProcesses->head;
+    processNode *temp = Processes->head;
     while (temp)
     {
         if (temp->pid == pid)
@@ -37,7 +37,7 @@ processNode *get_process_with_id(int pid)
 
 void remove_process_with_id(int pid)
 {
-    processNode *temp = bgProcesses->head;
+    processNode *temp = Processes->head;
     processNode *prev = NULL;
     while (temp)
     {
@@ -45,14 +45,14 @@ void remove_process_with_id(int pid)
         {
             if (prev == NULL)
             {
-                bgProcesses->head = temp->next;
+                Processes->head = temp->next;
                 free(temp);
-                bgProcesses->size -= 1;
+                Processes->size -= 1;
                 return;
             }
             prev->next = temp->next;
             free(temp);
-            bgProcesses->size -= 1;
+            Processes->size -= 1;
             return;
         }
         prev = temp;

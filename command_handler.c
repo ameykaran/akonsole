@@ -247,6 +247,11 @@ int imanHandler(const char *args)
     get_man_page(cmd);
 }
 
+int activitiesHandler(const char *args)
+{
+    activities();
+}
+
 cmdMap cmdTable[] = {
     {"", UNKNOWN, sysCmdHandler},
     {"exit", EXIT, exitHandler},
@@ -255,7 +260,8 @@ cmdMap cmdTable[] = {
     {"pastevents", PASTEVENTS, pasteventsHandler},
     {"proclore", PROCLORE, procloreHandler},
     {"seek", SEEK, seekHandler},
-    {"iman", IMAN, imanHandler}};
+    {"iman", IMAN, imanHandler},
+    {"activities", ACTIVITIES, activitiesHandler}};
 
 typedef struct CommandNode
 {
@@ -299,7 +305,7 @@ CommandNode *dequeueList(CommandsList *list, char *command)
 
 void execute_multi_line_command(char *cmd)
 {
-    printf("Command: '%s'\n", cmd);
+    // printf("Command: '%s'\n", cmd);
     char *arg = strdup(cmd);
     arg = remove_whitespaces(arg);
     arg = replace_pastevents_execute(arg);
@@ -319,22 +325,6 @@ void execute_multi_line_command(char *cmd)
         command = strtok_r(NULL, ";", &temp);
     }
 }
-
-// void split_raw_command(char *cmd, char **exec, char **args)
-// {
-//     for (int i = 0; i < strlen(cmd); i++)
-//     {
-//         if (cmd[i] != ' ')
-//             continue;
-//         *exec = cmd;
-//         *args = cmd + i + 1;
-//         cmd[i] = '\0';
-//     }
-//     if (!exec[0])
-//         *exec = cmd;
-//     if (!args[0])
-//         *args = strdup("");
-// }
 
 int execute_command(execHandler handler, char *rawCmd, char isBg)
 {
@@ -393,9 +383,9 @@ int execute_command(execHandler handler, char *rawCmd, char isBg)
     }
     else
     {
-        insert_process(pid, rawCmd);
+        insert_process(pid, rawCmd, isBg);
         if (isBg)
-            printf("[%d] %d\n", bgProcesses->size, pid);
+            printf("[%d] %d\n", Processes->size, pid);
         else
         {
             int status;
@@ -556,10 +546,10 @@ void kill_children(int id)
         }
 
         if (status == 0)
-            printf("[%d] %d exited " ANSI_FG_COLOR_GREEN "successfully" ANSI_FG_COLOR_YELLOW "\t%s\n" ANSI_COLOR_RESET, bgProcesses->size - 1, pid, process->pName);
+            printf("[%d] %d exited " ANSI_FG_COLOR_GREEN "successfully " ANSI_FG_COLOR_YELLOW "- %s" ANSI_COLOR_RESET "\n", Processes->size - 1, pid, process->pName);
         else
-            printf("[%d] %d exited " ANSI_FG_COLOR_RED "abnormally " ANSI_COLOR_RESET "with error: %d\t" ANSI_FG_COLOR_YELLOW "%s\n" ANSI_COLOR_RESET, bgProcesses->size - 1, pid, status, process->pName);
-        remove_process_with_id(pid);
+            printf("[%d] %d exited " ANSI_FG_COLOR_RED "abnormally " ANSI_COLOR_RESET "with error: %d" ANSI_FG_COLOR_YELLOW " - %s" ANSI_COLOR_RESET "\n", Processes->size - 1, pid, status, process->pName);
+        // remove_process_with_id(pid);
     }
 }
 

@@ -5,7 +5,7 @@ long TERMINAL_PID;
 char PREV_COMMAND[1024] = {0};
 char PREV_COMMAND_OUTPUT[1024];
 processList list;
-processList *bgProcesses = &list;
+processList *Processes = &list;
 
 int main()
 {
@@ -25,9 +25,9 @@ int main()
     strcpy(PREV_COMMAND_OUTPUT, CURR_DIR);
     strcat(PREV_COMMAND_OUTPUT, "/output");
 
-    bgProcesses->head = NULL;
-    bgProcesses->tail = NULL;
-    bgProcesses->size = 0;
+    Processes->head = NULL;
+    Processes->tail = NULL;
+    Processes->size = 0;
 
     struct sigaction bgProcessFinishSig = {0};
 
