@@ -1,7 +1,7 @@
 #ifndef COMMAND_HANDLER_H_
 #define COMMAND_HANDLER_H_
 
-typedef int (*execHandler)(const char *args);
+typedef int (*execHandler)(int argv, char *argc[]);
 
 typedef enum customCommands
 {

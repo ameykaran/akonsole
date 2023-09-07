@@ -17,7 +17,7 @@ typedef struct processList
     int size;
 } processList;
 
-void insert_process(int pid, char *cmd, char isBg);
+void insert_process(int pid, int argc, char *argv[], char isBg); 
 // processNode *get_f();
 
 processNode *get_process_with_id(int pid);

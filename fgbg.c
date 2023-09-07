@@ -1,12 +1,18 @@
 #include "headers.h"
 
-void insert_process(int pid, char *cmd, char isBg)
+void insert_process(int pid, int argc, char *argv[], char isBg)
 {
     processNode *newNode = (processNode *)calloc(1, sizeof(processNode));
     newNode->pid = pid;
     newNode->isBg = isBg;
     newNode->spawnTime = time(NULL);
-    strcpy(newNode->pName, cmd);
+    // char temp[ARG_MAX];
+    // while (argc)
+    // {
+    //     strcat(temp, argv[argc--]);
+    //     strcat(temp, " ");
+    // }
+    strcpy(newNode->pName, argv[0]);
 
     if (Processes->head == NULL)
     {

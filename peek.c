@@ -132,7 +132,7 @@ void ls(char *arg, int isHidden, int isFullInfo)
     path = strip(path, ' ');
     path = get_abs_path(path);
 
-    // cd(path, 1);
+    cd(path, 1);
 
     DIR *dir = opendir(path);
     if (!dir)
@@ -191,7 +191,7 @@ void ls(char *arg, int isHidden, int isFullInfo)
     else
         print_entries(entries, count);
 
-    // cd(PREV_DIR, 1);
+    cd(PREV_DIR, 1);
 
     free(path);
     free(entries);

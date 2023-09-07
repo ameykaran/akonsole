@@ -1,15 +1,15 @@
-A
-gcc test.c
-rm *.out
-rm a.out
-gcc test.c
-./a.out
+peek
+peek -a
+peek -l
+peek -l ..
+peek -l ~
+peek -l /home/amey
 exit
-iman
-iman ds cdc dsc
-iman sleep
+peek -l /home/amey
 exit
-iman seek
-iman netflix
-iman connect
-iman netflix
+peek -l /home/amey
+seek
+exit
+seek
+seek main
+seek ad /

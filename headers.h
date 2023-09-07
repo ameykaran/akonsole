@@ -52,6 +52,8 @@ extern long TERMINAL_PID;
 extern char PREV_COMMAND[1024];
 extern char PREV_COMMAND_OUTPUT[1024];
 extern processList *Processes;
+#define MAX_ARG_NUM 15 
+
 
 void printLogo();
 #endif

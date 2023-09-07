@@ -39,7 +39,7 @@ int main()
     struct sigaction exitSig = {0};
     exitSig.sa_handler = kill_terminal;
     sigemptyset(&exitSig.sa_mask);
-    exitSig.sa_flags = 0;
+    exitSig.sa_flags = SA_RESTART;
     sigaction(SIGINT, &exitSig, NULL);
 
     char buffer[ARG_MAX];
@@ -49,5 +49,6 @@ int main()
         fgets(buffer, ARG_MAX, stdin);
         print_last_exec_output();
         execute_multi_line_command(buffer);
+        memset(buffer, 0, ARG_MAX);
     }
 }

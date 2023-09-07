@@ -48,7 +48,7 @@ void printLogo()
         "          .??.    ~J?J?.      \n"
         "         :G@@^  :5@@@B~       \n"
         "        :B@@&E\\.7#@@&?        Welcome to " ANSI_FG_COLOR_YELLOW "AKonsole\n" ANSI_FG_COLOR_BLUE
-        "       ^#@@; ^P@@@5:            " ANSI_COLOR_RESET " new age terminal!\n" ANSI_FG_COLOR_BLUE
+        "       ^#@@; ^P@@@5:            " ANSI_COLOR_RESET " the new age terminal!\n" ANSI_FG_COLOR_BLUE
         "      ^#@@:   @@@#^           OS:     " ANSI_COLOR_RESET;
 
     printf("%s", logoText1);

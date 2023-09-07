@@ -2,34 +2,30 @@
 
 void execute_single_line_command(char *cmd);
 
-int warpHandler(const char *args)
+int warpHandler(int argc, char *argv[])
 {
-    char *arguments = strdup(args), *temp;
-    char *arg = strtok_r(arguments, " ", &temp);
-    if (!arg)
-        cd("~", 0);
-    while (arg)
-    {
-        cd(arg, 0);
-        arg = strtok_r(NULL, " ", &temp);
-    }
+    if (argc == 1)
+        cd(HOME_DIR, 1);
+    for (int i = 1; i < argc; i++)
+        cd(argv[i], 1);
 }
 
-int peekHandler(const char *args)
+int peekHandler(int argc, char *argv[])
 {
-    char *arguments = strdup(args), *temp;
-    char *arg = strtok_r(arguments, " ", &temp);
     int hidden = 0, detailed = 0;
-    char prev[PATH_MAX] = {0};
-    while (arg)
+    char path[PATH_MAX];
+    strcpy(path, argv[argc - 1]);
+
+    for (int i = 1; i < argc; i++)
     {
+        char *arg = argv[i];
         if (arg[0] == '-')
         {
-            if ((strlen(arg) == 2) || (strlen(arg) == 3))
+            for (int j = 1; j < strlen(arg); j++)
             {
-                if (arg[1] == 'a')
+                if (arg[j] == 'a')
                     hidden = 1;
-                else if (arg[1] == 'l')
+                else if (arg[j] == 'l')
                     detailed = 1;
                 else
                 {
@@ -37,63 +33,47 @@ int peekHandler(const char *args)
                     // TODO add peek usage
                     return 1;
                 }
-
-                if (strlen(arg) == 3)
-                {
-                    if (arg[2] == 'a')
-                        hidden = 1;
-                    else if (arg[2] == 'l')
-                        detailed = 1;
-                    else
-                    {
-                        print_error("Unkown flags");
-                        // TODO add peek usage
-                        return 1;
-                    }
-                }
-            }
-            else
-            {
-                print_error("Unkown flags");
-                // TODO add peek usage
-                return 1;
             }
         }
-        strcpy(prev, arg);
-        arg = strtok_r(NULL, " ", &temp);
     }
 
-    if (prev[0] == '-')
-        strcpy(prev, ".");
-    // printf("*%d*%d -%s\n", hidden, detailed, prev);
-    ls(prev, hidden, detailed);
+    if (argv[argc - 1][0] == '-' || !strcmp(argv[argc - 1], "peek"))
+        strcpy(path, ".");
+    ls(path, hidden, detailed);
     return 0;
 }
 
-int pasteventsHandler(const char *args)
+int pasteventsHandler(int argc, char *argv[])
 {
-    if (!strncmp(args, "execute ", 9))
+    if (argc == 1)
     {
-        char *cmd = strdup(args);
+        print_history();
+    }
+    else if (!strncmp(argv[1], "execute ", 9))
+    {
+        int i = 1;
+        char
+            cmd[BUFFER_LARGE] = {0};
+        while (i <= argc)
+        {
+            strcat(cmd, argv[i]);
+            strcat(cmd, " ");
+        }
+
         char *execCmd = replace_pastevents_execute(cmd);
 
-        if (execCmd == "")
+        if (strcmp(execCmd, "") && strcmp(execCmd, " "))
         {
             print_error("The given command is erroneous.");
             return 1;
         }
 
         execute_single_line_command(execCmd);
-        free(cmd);
         return 0;
     }
-    else if (!strcmp(args, "purge"))
+    else if (!strcmp(argv[1], "purge"))
     {
         delete_history();
-    }
-    else if (!strcmp(args, ""))
-    {
-        print_history();
     }
     else
     {
@@ -102,48 +82,46 @@ int pasteventsHandler(const char *args)
     }
 }
 
-int procloreHandler(const char *args)
+int procloreHandler(int argc, char *argv[])
 {
-    if (strcmp(args, ""))
+    if (argc == 2)
     {
-        char *str = strdup(args);
         char *temp;
-        long pid = strtoll(str, &temp, 10);
+        long pid = strtoll(argv[1], &temp, 10);
         proclore(pid);
-        free(str);
     }
-    else
+    else if (argc == 1)
     {
         char termPID[1024];
         sprintf(termPID, "%ld", TERMINAL_PID);
         proclore(TERMINAL_PID);
     }
+    else
+        // TODO add usage
+        print_error("Wrong usage");
 }
 
-int seekHandler(const char *args)
+int seekHandler(int argc, char *argv[])
 {
-    char *arguments = strdup(args), *temp;
-    char *arg = strtok_r(arguments, " ", &temp);
-
     char *name = (char *)calloc(PATH_MAX, sizeof(char));
     char *path = (char *)calloc(PATH_MAX, sizeof(char));
     char flags = 0;
 
-    while (arg)
+    for (int i = 1; i < argc; i++)
     {
-        if (arg[0] == '-')
+        if (argv[i][0] == '-')
         {
-            for (int i = 1; i < strlen(arg); i++)
+            for (int j = 1; j < strlen(argv[i]); j++)
             {
-                if (arg[i] == 'd')
+                if (argv[i][j] == 'd')
                     flags |= SEEK_DIR;
-                else if (arg[i] == 'f')
+                else if (argv[i][j] == 'f')
                     flags |= SEEK_FILE;
-                else if (arg[i] == 'l')
+                else if (argv[i][j] == 'l')
                     flags |= SEEK_LINK;
-                else if (arg[i] == 'e')
+                else if (argv[i][j] == 'e')
                     flags |= SEEK_FLAG_EXEC;
-                else if (arg[i] == 'h')
+                else if (argv[i][j] == 'h')
                     flags |= SEEK_FLAG_HIDDEN;
                 else
                 {
@@ -157,16 +135,15 @@ int seekHandler(const char *args)
         {
             if (flags & SEEK_FLAG_NAME)
             {
-                strcpy(path, arg);
+                strcpy(path, argv[i]);
                 flags |= SEEK_FLAG_PATH;
             }
             else
             {
-                strcpy(name, arg);
+                strcpy(name, argv[i]);
                 flags |= SEEK_FLAG_NAME;
             }
         }
-        arg = strtok_r(NULL, " ", &temp);
     }
 
     if ((SEEK_IS_DIR(flags) && SEEK_IS_FILE(flags)) ||
@@ -185,7 +162,9 @@ int seekHandler(const char *args)
         return 1;
     }
 
-    char *newpath = get_abs_path(path ? path : ".");
+    if (!(flags & SEEK_FLAG_PATH))
+       strcpy( path, ".");
+    char *newpath = get_abs_path(path);
     free(path);
     if (strcmp(newpath, "/"))
         newpath = rstrip(newpath, '/');
@@ -202,43 +181,23 @@ int exitHandler()
     exit(EXIT_SUCCESS);
 }
 
-int sysCmdHandler(const char *args)
+int sysCmdHandler(int argc, char *argv[])
 {
-    char *arguments = strdup(args), *temp;
-    char *arg = strtok_r(arguments, " ", &temp);
-
-    char *argList[1024] = {NULL};
-    int argCount = 0;
-
-    while (arg)
-    {
-        argList[argCount++] = strdup(arg);
-        arg = strtok_r(NULL, " ", &temp);
-    }
-    argList[argCount] = NULL;
-
-    execvp(argList[0], argList);
+    argv[argc] = NULL;
+    execvp(argv[0], argv);
 }
 
-int imanHandler(const char *args)
+int imanHandler(int argc, char *argv[])
 {
     char cmd[BUFFER_SMALL] = {0};
     char *temp;
-    int numArgs = 0;
-    char *arg = strtok_r(strdup(args), " ", &temp);
-    if (!arg)
+    if (argc == 1)
     {
         print_error("Enter the command to get the manual for");
         return 1;
     }
-    strcpy(cmd, arg);
-    while (arg)
-    {
-        strcpy(cmd, arg);
-        numArgs++;
-        arg = strtok_r(NULL, " ", &temp);
-    }
-    if (numArgs > 1)
+
+    if (argc > 2)
     {
         print_error("Enter only one command");
         return 1;
@@ -247,7 +206,7 @@ int imanHandler(const char *args)
     get_man_page(cmd);
 }
 
-int activitiesHandler(const char *args)
+int activitiesHandler(int argc, char *argv[])
 {
     activities();
 }
@@ -262,46 +221,6 @@ cmdMap cmdTable[] = {
     {"seek", SEEK, seekHandler},
     {"iman", IMAN, imanHandler},
     {"activities", ACTIVITIES, activitiesHandler}};
-
-typedef struct CommandNode
-{
-    char data[ARG_MAX];
-    struct CommandNode *next;
-} CommandNode;
-typedef struct CommandsList
-{
-    CommandNode *head;
-    CommandNode *tail;
-} CommandsList;
-CommandNode *createCommandNode(char *cmd)
-{
-    CommandNode *temp = (CommandNode *)malloc(sizeof(CommandNode));
-    strcpy(temp->data, cmd);
-    temp->next = NULL;
-    return temp;
-}
-void enqueueList(CommandsList *list, char *command)
-{
-    CommandNode *temp = createCommandNode(command);
-
-    if (!list->head)
-    {
-        list->head = temp;
-        list->tail = temp;
-    }
-    else
-    {
-        list->tail->next = temp;
-        list->tail = temp;
-    }
-}
-CommandNode *dequeueList(CommandsList *list, char *command)
-{
-    CommandNode *start = list->head;
-    if (start)
-        list->head = start->next;
-    return start;
-}
 
 void execute_multi_line_command(char *cmd)
 {
@@ -326,9 +245,8 @@ void execute_multi_line_command(char *cmd)
     }
 }
 
-int execute_command(execHandler handler, char *rawCmd, char isBg)
+int execute_command(execHandler handler, int argc, char *argv[], char isBg)
 {
-    // printf("Command: '%s'\n", rawCmd);
     int pid = fork();
     if (pid < 0)
     {
@@ -354,36 +272,24 @@ int execute_command(execHandler handler, char *rawCmd, char isBg)
 
             fclose(outputFile);
 
-            handler(rawCmd);
+            handler(argc, argv);
 
-            printf(ANSI_FG_COLOR_YELLOW);
-            for (int i = 0; i < strlen(rawCmd); i++)
-            {
-                if (rawCmd[i] == ' ')
-                    break;
-                printf("%c", rawCmd[i]);
-            }
+            printf(ANSI_FG_COLOR_YELLOW "%s", argv[0]);
             print_error(" No such command found");
             exit(0);
         }
         else
         {
-            handler(rawCmd);
+            handler(argc, argv);
 
-            printf(ANSI_FG_COLOR_YELLOW);
-            for (int i = 0; i < strlen(rawCmd); i++)
-            {
-                if (rawCmd[i] == ' ')
-                    break;
-                printf("%c", rawCmd[i]);
-            }
+            printf(ANSI_FG_COLOR_YELLOW "%s", argv[0]);
             print_error(" No such command found");
             exit(0);
         }
     }
     else
     {
-        insert_process(pid, rawCmd, isBg);
+        insert_process(pid, argc, argv, isBg);
         if (isBg)
             printf("[%d] %d\n", Processes->size, pid);
         else
@@ -395,26 +301,25 @@ int execute_command(execHandler handler, char *rawCmd, char isBg)
     }
 }
 
+void checkIORedirect() {}
+
 void run_single_command(char *cmd, int isBg)
 {
-    char *exec = NULL, *args = NULL, *command = strdup(cmd);
-    for (int i = 0; i < strlen(command); i++)
-    {
-        if (command[i] != ' ')
-            continue;
-        exec = command;
-        args = command + i + 1;
+    char **argv = (char **)malloc(MAX_ARG_NUM * sizeof(char *));
+    int argc = 0;
 
-        command[i] = '\0';
-    }
-    if (!exec || !exec[0])
-        exec = command;
-    if (!args || !args[0])
-        args = strdup("");
+    char *temp, *curr;
+    curr = strtok_r(strdup(cmd), " ", &temp);
+    do
+    {
+        argv[argc++] = strdup(curr);
+        curr = strtok_r(NULL, " ", &temp);
+    } while (curr);
+    // strcpy(argv[argc],);
 
     cmdMap *evaluatedCmd = NULL;
     for (int i = 0; i < sizeof(cmdTable) / sizeof(cmdMap); i++)
-        if (!strcmp(exec, cmdTable[i].cmdName))
+        if (!strcmp(argv[0], cmdTable[i].cmdName))
         {
             evaluatedCmd = cmdTable + i;
             break;
@@ -422,37 +327,28 @@ void run_single_command(char *cmd, int isBg)
 
     evaluatedCmd = evaluatedCmd ? evaluatedCmd : cmdTable;
     if (evaluatedCmd->cmdID == EXIT)
-        evaluatedCmd->handler("");
+        evaluatedCmd->handler(0, NULL);
 
     time_t srtTime = 0, endTime = 0;
     srtTime = time(NULL);
 
     if (evaluatedCmd->cmdID != UNKNOWN)
     {
-        evaluatedCmd->handler(args);
+        evaluatedCmd->handler(argc, argv);
         printf("\n");
     }
     else
     {
-        execute_command(evaluatedCmd->handler, cmd, isBg);
+        execute_command(evaluatedCmd->handler, argc, argv, isBg);
         endTime = time(NULL);
         if (!isBg)
         {
-            printf(ANSI_FG_COLOR_YELLOW "\n%s " ANSI_COLOR_RESET "ran in " ANSI_FG_COLOR_MAGENTA "%lds" ANSI_COLOR_RESET "\n\n", exec, endTime - srtTime);
+            printf(ANSI_FG_COLOR_YELLOW "\n%s " ANSI_COLOR_RESET "ran in " ANSI_FG_COLOR_MAGENTA "%lds" ANSI_COLOR_RESET "\n\n", argv[0], endTime - srtTime);
 
             if (endTime - srtTime > 2)
             {
-                int i = 0;
-                char *dup = exec;
-                // char *dup = strdup(command);
-
-                while (dup && dup[i] != ' ')
-                    i++;
-
-                dup[i] = '\0';
-
                 strcpy(PREV_COMMAND, " " ANSI_FG_COLOR_YELLOW);
-                strcat(PREV_COMMAND, dup);
+                strcat(PREV_COMMAND, argv[0]);
                 strcat(PREV_COMMAND, ANSI_COLOR_RESET ":" ANSI_FG_COLOR_MAGENTA);
 
                 char time[100];
@@ -462,14 +358,14 @@ void run_single_command(char *cmd, int isBg)
             }
         }
     }
+    free(argv);
     return;
 }
 
 void execute_single_line_command(char *cmd)
 {
     char *arg = strdup(cmd);
-    arg = rstrip(arg, '\n');
-    char *command = trim(arg, " ");
+    char *command = trim(rstrip(arg, '\n'), " ");
 
     if (!strcmp(command, ""))
         return;
@@ -556,16 +452,16 @@ void kill_children(int id)
 void kill_terminal(int id)
 
 {
-    signal(id, SIG_IGN);
+    // signal(id, SIG_IGN);
     printf("Do you really want to quit? [y/n] ");
     char c = getchar();
     printf("*%d*%s*\n", c, &c);
 
-    if (c == 10)
-        signal(SIGINT, kill_terminal);
-    else if (c == 'y' || c == 'Y')
-        (cmdTable + 1)->handler("exit");
+    // if (c == 10)
+    //     signal(SIGINT, kill_terminal);
+    if (c == 'y' || c == 'Y')
+        (cmdTable + 1)->handler(0, NULL);
     else
         signal(SIGINT, kill_terminal);
-    // getchar();
+    getchar();
 }
