@@ -213,6 +213,17 @@ int activitiesHandler(int argc, char *argv[])
     activities();
 }
 
+int pingHandler(int argc, char *argv[])
+{
+    if (argc != 3)
+    {
+        print_error("Invalid syntax");
+        return 1;
+    }
+    ping(atoi(argv[1]), atoi(argv[2]));
+    return 0;
+}
+
 cmdMap cmdTable[] = {
     {"", UNKNOWN, sysCmdHandler},
     {"exit", EXIT, exitHandler},
@@ -222,6 +233,7 @@ cmdMap cmdTable[] = {
     {"proclore", PROCLORE, procloreHandler},
     {"seek", SEEK, seekHandler},
     {"iman", IMAN, imanHandler},
+    {"ping", PING, pingHandler},
     {"activities", ACTIVITIES, activitiesHandler}};
 
 void execute_multi_line_command(char *cmd)
@@ -299,6 +311,10 @@ int execute_command(execHandler handler, int argc, char *argv[], char isBg)
         {
             int status;
             waitpid(pid, &status, 0);
+            processNode *currProc = get_process_with_id(pid);
+            if (!currProc)
+                return 1;
+            currProc->isRunning = 0;
             return 0;
         }
     }

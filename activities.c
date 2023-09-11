@@ -15,6 +15,7 @@ void activities()
         if (!statusFile)
         {
             printf("Stopped\n");
+            printf("Struct %c\n", head->isRunning ? 'y' : 'n');
             head = head->next;
             continue;
         }
@@ -42,6 +43,7 @@ void activities()
             }
         }
         fclose(statusFile);
+        printf("Struct %c\n", head->isRunning ? 'y' : 'n');
         head = head->next;
     }
 }

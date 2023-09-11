@@ -35,7 +35,8 @@ int main()
     while (1)
     {
         prompt();
-        fgets(buffer, ARG_MAX, stdin);
+        if (!fgets(buffer, ARG_MAX, stdin))
+            ctrl_d_handler(buffer);
         print_last_exec_output();
         execute_multi_line_command(buffer);
         memset(buffer, 0, ARG_MAX);
