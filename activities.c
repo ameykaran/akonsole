@@ -24,11 +24,16 @@ void activities()
         {
             if (!strncmp(buffer, "State:", 6))
             {
-                for (int i = 10; i < strlen(buffer); i++)
+                int i = 7;
+                while (buffer[i] != '(')
+                    i++;
+                i++;
+
+                printf("%c", buffer[i++] - 'a' + 'A');
+
+                for (; i < strlen(buffer); i++)
                 {
-                    if (i == 10)
-                        printf("%c", buffer[i] - 'a' + 'A');
-                    else if (buffer[i] == ')')
+                    if (buffer[i] == ')')
                         break;
                     else
                         printf("%c", buffer[i]);

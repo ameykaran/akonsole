@@ -16,4 +16,7 @@ Prints the given num as a digits-digit number
 void print_aligned(long num, int digits);
 char *trim(char *string, char *prefix);
 
+void print_last_exec_output();
+int readString(const char *str, char *res);
+
 #endif

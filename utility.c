@@ -32,7 +32,6 @@ void print_error(char *msg)
 char *get_abs_path(char *path)
 {
     char *absPath = (char *)calloc(PATH_MAX, sizeof(char));
-    // int changed = 0;
 
     if ((path[0] == '/'))
     {
@@ -48,49 +47,12 @@ char *get_abs_path(char *path)
 
     if (path[0] == '~')
     {
-        // changed = 1;
         strcpy(absPath, HOME_DIR);
         strcat(absPath, "/");
         path += 1;
     }
 
     strcat(absPath, path);
-    // if (path[0] == '.' && path[1] == '.')
-    // {
-    //     changed = 1;
-    //     strcpy(absPath, CURR_DIR);
-    //     if (!strcmp(absPath, "~"))
-    //         strcpy(absPath, HOME_DIR);
-    //     for (int j = strlen(absPath) - 1; j > -1; j--)
-    //         if (absPath[j] == '/')
-    //         {
-    //             absPath[j] = '\0';
-    //             break;
-    //         }
-    //     strcat(absPath, "/");
-    //     path += 2;
-    // }
-    // else if (path[0] == '.')
-    // {
-    //     changed = 1;
-    //     strcpy(absPath, CURR_DIR);
-    //     if (!strcmp(absPath, "~"))
-    //         strcpy(absPath, HOME_DIR);
-    //     strcat(absPath, "/");
-    //     path += 1;
-    // }
-
-    // if (!changed)
-    // {
-    //     strcpy(absPath, CURR_DIR);
-    //     strcat(absPath, "/");
-    //     strcat(absPath, path);
-    //     return get_abs_path(absPath, 1);
-    // }
-
-    // if (path[0] && path[1])
-    //     strcat(absPath, path + (changed ? 1 : 0));
-
     return absPath;
 }
 
@@ -151,4 +113,54 @@ char *trim(char *string, char *prefix)
         i++;
     new = new + i + (i == 0 ? 0 : 1);
     return new;
+}
+
+void print_last_exec_output()
+{
+    long bytes = 0;
+    // FILE *output = fopen("/home/amey/output", "a+");
+    FILE *output = fopen(PREV_COMMAND_OUTPUT, "a+");
+    if (output < 0)
+    {
+        print_error("Not able to open previous output buffer");
+        return;
+    }
+
+    if (output)
+    {
+        char buffer[1024];
+        while (fgets(buffer, 1024, output))
+        {
+            printf("%s", buffer);
+            bytes += strlen(buffer);
+        }
+
+        if (bytes)
+            printf("\n");
+        fclose(output);
+    }
+    output = fopen(PREV_COMMAND_OUTPUT, "w");
+    if (output < 0)
+    {
+        print_error("Not able to open previous output buffer");
+        return;
+    }
+    fputs("", output);
+    fclose(output);
+
+    return;
+}
+
+int readString(const char *str, char *res)
+{
+    int i = 0, j = 0;
+    while (str[i] != '\'' && str[i] != '\"')
+        i++;
+    i++;
+
+    while (str[i] != '\'' && str[i] != '\"')
+        res[j++] = str[i++];
+    res[j] = 0;
+    i++;
+    return i;
 }

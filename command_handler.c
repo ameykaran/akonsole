@@ -1,5 +1,7 @@
 #include "headers.h"
 
+int inpBackup = -1, inpTextBackup = -1, outBackup = -1;
+
 void execute_single_line_command(char *cmd);
 
 int warpHandler(int argc, char *argv[])
@@ -163,7 +165,7 @@ int seekHandler(int argc, char *argv[])
     }
 
     if (!(flags & SEEK_FLAG_PATH))
-       strcpy( path, ".");
+        strcpy(path, ".");
     char *newpath = get_abs_path(path);
     free(path);
     if (strcmp(newpath, "/"))
@@ -260,20 +262,21 @@ int execute_command(execHandler handler, int argc, char *argv[], char isBg)
             FILE *outputFile = fopen(PREV_COMMAND_OUTPUT, "w");
             if (outputFile == NULL)
             {
-                perror("fopen");
+                perror("Background buffer");
                 return 1;
             }
             int fileDescriptor = fileno(outputFile);
             if (dup2(fileDescriptor, STDOUT_FILENO) == -1)
             {
-                perror("dup2");
+                perror("Background buffer");
                 return 1;
             }
-
+            close(fileDescriptor);
             fclose(outputFile);
 
             handler(argc, argv);
 
+            RESET_IO_REDIRECTION;
             printf(ANSI_FG_COLOR_YELLOW "%s", argv[0]);
             print_error(" No such command found");
             exit(0);
@@ -281,7 +284,7 @@ int execute_command(execHandler handler, int argc, char *argv[], char isBg)
         else
         {
             handler(argc, argv);
-
+            RESET_IO_REDIRECTION;
             printf(ANSI_FG_COLOR_YELLOW "%s", argv[0]);
             print_error(" No such command found");
             exit(0);
@@ -301,9 +304,166 @@ int execute_command(execHandler handler, int argc, char *argv[], char isBg)
     }
 }
 
-void checkIORedirect() {}
+void readTextInput(char **string, char *text)
+{
+    int i = readString(*string, text);
+    *string = *string + i;
+}
 
-void run_single_command(char *cmd, int isBg)
+int checkIORedirect(char *cmd, IOQuadrio *quadrio)
+{
+    char newCmd[1000]; // TODO CHANGE to argmax
+    int newInd = 0;
+    for (int i = 0; i < strlen(cmd); i++)
+    {
+        if (!strncmp(cmd + i, ">>", 2))
+        {
+            newCmd[newInd++] = ' ';
+            newCmd[newInd++] = '>';
+            newCmd[newInd++] = '>';
+            newCmd[newInd++] = ' ';
+            i++;
+        }
+        else if (!strncmp(cmd + i, ">", 1))
+        {
+            newCmd[newInd++] = ' ';
+            newCmd[newInd++] = '>';
+            newCmd[newInd++] = ' ';
+        }
+        else if (!strncmp(cmd + i, "<<<", 3))
+        {
+            newCmd[newInd++] = ' ';
+            newCmd[newInd++] = '<';
+            newCmd[newInd++] = '<';
+            newCmd[newInd++] = '<';
+            newCmd[newInd++] = ' ';
+            i += 2;
+        }
+        else if (!strncmp(cmd + i, "<", 1))
+        {
+            newCmd[newInd++] = ' ';
+            newCmd[newInd++] = '<';
+            newCmd[newInd++] = ' ';
+        }
+        else if (!strncmp(cmd + i, "<>", 2))
+            i++;
+        else if (!strncmp(cmd + i, "<>>", 3))
+            i += 2;
+        else
+            newCmd[newInd++] = cmd[i];
+    }
+    newCmd[newInd] = 0;
+
+    char *temp, *inp = 0, *out = 0, *app = 0, *inpText = 0, new[1000] = {0}; // todo change argmax
+    char *str = strtok_r(newCmd, " ", &temp);
+    char flag = 0, inpFlag = 0, outFlag = 0;
+    while (str)
+    {
+        if (flag == IO_INP)
+        {
+            if (inpFlag)
+            {
+                print_error("Multiple inputs found");
+                return 1;
+            }
+            if (strcmp(str, ">") && strcmp(str, "<") && strcmp(str, ">>"))
+                inp = strdup(str);
+            flag = 0;
+            inpFlag += 1;
+            str = strtok_r(NULL, " ", &temp);
+            continue;
+        }
+        else if (flag == IO_INP_TEXT)
+        {
+            if (inpFlag)
+            {
+                print_error("Multiple inputs found");
+                return 1;
+            }
+            if (strcmp(str, ">") && strcmp(str, "<") && strcmp(str, ">>"))
+            {
+                char res[NAME_MAX];
+                char *tempCat = strdup(str);
+                strcat(tempCat, " ");
+                strcat(tempCat, temp);
+                readTextInput(&tempCat, res);
+                inpText = strdup(res);
+                temp = tempCat;
+            }
+            flag = 0;
+            inpFlag += 1;
+            str = strtok_r(NULL, " ", &temp);
+            continue;
+        }
+        else if (flag == IO_OUT)
+        {
+            if (outFlag)
+            {
+                print_error("Multiple outputs found");
+                return 1;
+            }
+            if (!strcmp(str, ">") || !strcmp(str, "<") || !strcmp(str, ">>"))
+            {
+                print_error("IO Redirection: Empty output file");
+                printf("Use '>' or '>>' to redirect the output to a file\n");
+                return 1;
+            }
+            out = strdup(str);
+            flag = 0;
+            outFlag += 1;
+            str = strtok_r(NULL, " ", &temp);
+            continue;
+        }
+        else if (flag == IO_APP)
+        {
+            if (outFlag)
+            {
+                print_error("Multiple outputs found");
+                return 1;
+            }
+            if (!strcmp(str, ">") || !strcmp(str, "<") || !strcmp(str, ">>"))
+            {
+                print_error("IO Redirection: Empty output file");
+                printf("Use '>' or '>>' to redirect the output to a file\n");
+                return 1;
+            }
+            app = strdup(str);
+            flag = 0;
+            outFlag += 1;
+            str = strtok_r(NULL, " ", &temp);
+            continue;
+        }
+
+        if (!strcmp(str, "<"))
+            flag = IO_INP;
+        else if (!strcmp(str, ">"))
+            flag = IO_OUT;
+        else if (!strcmp(str, "<<<"))
+            flag = IO_INP_TEXT;
+        else if (!strcmp(str, ">>"))
+            flag = IO_APP;
+        else
+        {
+            strcat(new, str);
+            strcat(new, " ");
+        }
+
+        str = strtok_r(NULL, " ", &temp);
+    }
+    if (inp)
+        quadrio->inp = strdup(inp);
+    if (inpText)
+        quadrio->inpText = strdup(inpText);
+    if (out)
+        quadrio->out = strdup(out);
+    if (app)
+        quadrio->app = strdup(app);
+    printf("%s\t%s\t%s\t%s\n", inp, inpText, out, app);
+    strcpy(cmd, new);
+    return 0;
+}
+
+void run_single_command(char *cmd, int isBg, IOQuadrio quadrio)
 {
     char **argv = (char **)malloc(MAX_ARG_NUM * sizeof(char *));
     int argc = 0;
@@ -332,14 +492,76 @@ void run_single_command(char *cmd, int isBg)
     time_t srtTime = 0, endTime = 0;
     srtTime = time(NULL);
 
+    if (quadrio.inp)
+    {
+        int inpFd = open(quadrio.inp, O_RDONLY);
+        if (inpFd == -1)
+        {
+            perror("IORedirection");
+            return;
+        }
+        inpBackup = dup(STDIN_FILENO);
+        dup2(inpFd, STDIN_FILENO);
+        close(inpFd);
+    }
+
+    if (quadrio.inpText)
+    {
+        FILE *tmpFile = tmpfile();
+        // fprintf(tmpFile, "%s", quadrio.inpText);
+        fwrite(quadrio.inpText, sizeof(char), strlen(quadrio.inpText), tmpFile);
+        fflush(NULL);
+        fseek(tmpFile, 0, SEEK_SET);
+
+        int inpFd = fileno(tmpFile);
+        if (inpFd == -1)
+        {
+            perror("IORedirection");
+            return;
+        }
+        inpBackup = dup(STDIN_FILENO);
+        dup2(inpFd, STDIN_FILENO);
+        inpTextBackup = dup(inpFd);
+        close(inpFd);
+        fclose(tmpFile);
+    }
+
+    if (quadrio.out)
+    {
+        int outFd = open(quadrio.out, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+        if (outFd == -1)
+        {
+            perror("IORedirection");
+            return;
+        }
+        outBackup = dup(STDOUT_FILENO);
+        dup2(outFd, STDOUT_FILENO);
+        close(outFd);
+    }
+    if (quadrio.app)
+    {
+        int outFd = open(quadrio.out, O_CREAT | O_APPEND | O_TRUNC, 0644);
+        if (outFd == -1)
+        {
+            perror("IORedirection");
+            return;
+        }
+        outBackup = dup(STDOUT_FILENO);
+        dup2(outFd, STDOUT_FILENO);
+        close(outFd);
+    }
+
     if (evaluatedCmd->cmdID != UNKNOWN)
     {
         evaluatedCmd->handler(argc, argv);
+        RESET_IO_REDIRECTION;
         printf("\n");
     }
+
     else
     {
         execute_command(evaluatedCmd->handler, argc, argv, isBg);
+        RESET_IO_REDIRECTION;
         endTime = time(NULL);
         if (!isBg)
         {
@@ -381,87 +603,20 @@ void execute_single_line_command(char *cmd)
 
     while (ampCount)
     {
-        run_single_command(strip(strdup(bgCmd), ' '), 1);
+        IOQuadrio quadrio = {0};
+        int ct = 0, arg[4] = {0};
+        char *processed = strip(strdup(bgCmd), ' ');
+        if (checkIORedirect(processed, &quadrio))
+            return;
+        run_single_command(processed, 1, quadrio);
         ampCount--;
         bgCmd = strtok_r(NULL, "&", &temp);
     }
 
+    IOQuadrio quadrio = {0};
+    char *processed = strip(strdup(bgCmd), ' ');
+    if (checkIORedirect(processed, &quadrio))
+        return;
     if (bgCmd)
-        run_single_command(strip(strdup(bgCmd), ' '), 0);
-}
-
-void print_last_exec_output()
-{
-    long bytes = 0;
-    // FILE *output = fopen("/home/amey/output", "a+");
-    FILE *output = fopen(PREV_COMMAND_OUTPUT, "a+");
-    if (output < 0)
-    {
-        print_error("Not able to open previous output buffer");
-        return;
-    }
-
-    if (output)
-    {
-        char buffer[1024];
-        while (fgets(buffer, 1024, output))
-        {
-            printf("%s", buffer);
-            bytes += strlen(buffer);
-        }
-
-        if (bytes)
-            printf("\n");
-        fclose(output);
-    }
-    output = fopen(PREV_COMMAND_OUTPUT, "w");
-    if (output < 0)
-    {
-        print_error("Not able to open previous output buffer");
-        return;
-    }
-    fputs("", output);
-    fclose(output);
-
-    return;
-}
-
-void kill_children(int id)
-{
-    dup2(STDOUT_FILENO, STDOUT_FILENO);
-
-    int status, pid;
-    if ((pid = waitpid(-1, &status, WNOHANG)) > 0)
-    {
-        printf("%d\n", pid);
-        processNode *process = get_process_with_id(pid);
-        if (!process)
-        {
-            print_error("Could not find process ");
-            return;
-        }
-
-        if (status == 0)
-            printf("[%d] %d exited " ANSI_FG_COLOR_GREEN "successfully " ANSI_FG_COLOR_YELLOW "- %s" ANSI_COLOR_RESET "\n", Processes->size - 1, pid, process->pName);
-        else
-            printf("[%d] %d exited " ANSI_FG_COLOR_RED "abnormally " ANSI_COLOR_RESET "with error: %d" ANSI_FG_COLOR_YELLOW " - %s" ANSI_COLOR_RESET "\n", Processes->size - 1, pid, status, process->pName);
-        // remove_process_with_id(pid);
-    }
-}
-
-void kill_terminal(int id)
-
-{
-    // signal(id, SIG_IGN);
-    printf("Do you really want to quit? [y/n] ");
-    char c = getchar();
-    printf("*%d*%s*\n", c, &c);
-
-    // if (c == 10)
-    //     signal(SIGINT, kill_terminal);
-    if (c == 'y' || c == 'Y')
-        (cmdTable + 1)->handler(0, NULL);
-    else
-        signal(SIGINT, kill_terminal);
-    getchar();
+        run_single_command(processed, 0, quadrio);
 }

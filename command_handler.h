@@ -20,6 +20,11 @@ typedef enum customCommands
     EXIT
 } customCommands;
 
+#define IO_INP 1
+#define IO_INP_TEXT 2
+#define IO_OUT 3
+#define IO_APP 4
+
 typedef struct cmdMap
 {
     char *cmdName;
@@ -27,9 +32,18 @@ typedef struct cmdMap
     execHandler handler;
 } cmdMap;
 
+typedef struct IOQuadrio
+{
+    char *inp, *inpText, *app, *out;
+} IOQuadrio;
+
 void execute_multi_line_command(char *cmd);
-void print_last_exec_output();
-void kill_children(int id);
-void kill_terminal(int id);
+
+#define RESET_IO_REDIRECTION         \
+    dup2(inpBackup, STDIN_FILENO);  \
+    dup2(outBackup, STDOUT_FILENO); \
+    close(inpBackup);               \
+    close(inpTextBackup);           \
+    close(outBackup);
 
 #endif
