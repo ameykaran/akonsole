@@ -11,7 +11,7 @@ int main()
 {
     printf("\033c");
 
-    printLogo();
+    // printLogo();
 
     if (!getcwd(HOME_DIR, PATH_MAX))
     {
@@ -29,18 +29,7 @@ int main()
     Processes->tail = NULL;
     Processes->size = 0;
 
-    struct sigaction bgProcessFinishSig = {0};
-
-    bgProcessFinishSig.sa_handler = kill_children;
-    sigemptyset(&bgProcessFinishSig.sa_mask);
-    bgProcessFinishSig.sa_flags = SA_RESTART | SA_NOCLDSTOP;
-    sigaction(SIGCHLD, &bgProcessFinishSig, NULL);
-
-    struct sigaction exitSig = {0};
-    exitSig.sa_handler = kill_terminal;
-    sigemptyset(&exitSig.sa_mask);
-    exitSig.sa_flags = SA_RESTART;
-    sigaction(SIGINT, &exitSig, NULL);
+    set_signal_handlers();
 
     char buffer[ARG_MAX];
     while (1)

@@ -12,6 +12,8 @@
 
 - Paths can be specified both absolutely or relative to the home dierctory of the terminal.
 
+- IO Redirection is considered for the nearest command
+
 ### warp
 
 Syntax `warp [path [path1 [path2 ...]]]`

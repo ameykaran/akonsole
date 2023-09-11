@@ -292,7 +292,7 @@ int execute_command(execHandler handler, int argc, char *argv[], char isBg)
     }
     else
     {
-        insert_process(pid, argc, argv, isBg);
+        insert_process(pid, argc, argv[0], isBg);
         if (isBg)
             printf("[%d] %d\n", Processes->size, pid);
         else
@@ -613,10 +613,13 @@ void execute_single_line_command(char *cmd)
         bgCmd = strtok_r(NULL, "&", &temp);
     }
 
-    IOQuadrio quadrio = {0};
-    char *processed = strip(strdup(bgCmd), ' ');
-    if (checkIORedirect(processed, &quadrio))
-        return;
     if (bgCmd)
-        run_single_command(processed, 0, quadrio);
+    {
+        IOQuadrio quadrio = {0};
+        char *processed = strip(strdup(bgCmd), ' ');
+        if (checkIORedirect(processed, &quadrio))
+            return;
+        if (bgCmd)
+            run_single_command(processed, 0, quadrio);
+    }
 }
