@@ -19,15 +19,14 @@ char *trim(char *string, char *prefix);
 void print_last_exec_output();
 int readString(const char *str, char *res);
 
-
-
 typedef struct processNode
 {
     int pid;
     char pName[256];
-    char isBg;
+    char isBg, isRunning;
     time_t spawnTime;
     struct processNode *next, *prev;
+
 } processNode;
 
 typedef struct processList

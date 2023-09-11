@@ -28,23 +28,30 @@ void kill_children(int id)
 
         if (process->isBg)
         {
-            process->isRunning = 0;
+            // process->isRunning = 0;
             if (status == 0)
                 printf("[%d] %d exited " ANSI_FG_COLOR_GREEN "successfully " ANSI_FG_COLOR_YELLOW "- %s" ANSI_COLOR_RESET "\n", Processes->size - 1, pid, process->pName);
             else
                 printf("[%d] %d exited " ANSI_FG_COLOR_RED "abnormally " ANSI_COLOR_RESET "with error: %d" ANSI_FG_COLOR_YELLOW " - %s" ANSI_COLOR_RESET "\n", Processes->size - 1, pid, status, process->pName);
-            // remove_process_with_id(pid);
         }
+        remove_process_with_id(pid);
     }
+}
+
+processNode *get_last_fg_process()
+{
+    if (!Processes->head)
+        return NULL;
+    processNode *lastFg = Processes->tail;
+    while (lastFg && lastFg->isBg)
+        lastFg = lastFg->prev;
+
+    return lastFg;
 }
 
 void kill_fg_process(int id)
 {
-    if (!Processes->head)
-        return;
-    processNode *lastFg = Processes->tail;
-    while (lastFg && lastFg->isBg)
-        lastFg = lastFg->prev;
+    processNode *lastFg = get_last_fg_process();
     if (lastFg)
     {
         printf("Recent fg- %d\n", lastFg->pid);
@@ -61,13 +68,18 @@ void set_signal_handlers()
     bgProcessFinishSig.sa_flags = SA_RESTART | SA_NOCLDSTOP;
     sigaction(SIGCHLD, &bgProcessFinishSig, NULL);
 
-    struct sigaction exitSig = {0};
+    struct sigaction ctrlC_Sig = {0};
     // exitSig.sa_handler = kill_terminal;
-    sigemptyset(&exitSig.sa_mask);
-    exitSig.sa_flags = SA_RESTART;
-    exitSig.sa_handler = kill_fg_process;
+    sigemptyset(&ctrlC_Sig.sa_mask);
+    ctrlC_Sig.sa_flags = SA_RESTART;
+    ctrlC_Sig.sa_handler = kill_fg_process;
+    sigaction(SIGINT, &ctrlC_Sig, NULL);
 
-    sigaction(SIGINT, &exitSig, NULL);
+    struct sigaction ctrlZ_Sig = {0};
+    sigemptyset(&ctrlZ_Sig.sa_mask);
+    ctrlZ_Sig.sa_flags = SA_RESTART;
+    ctrlZ_Sig.sa_handler = ctrl_z_handler;
+    sigaction(SIGTSTP, &ctrlZ_Sig, NULL);
 }
 
 void ctrl_d_handler(char *buffer)
@@ -97,4 +109,42 @@ void ctrl_d_handler(char *buffer)
     // else
     //     signal(SIGINT, kill_terminal);
     // getchar();
+}
+
+void ctrl_z_handler(int id)
+{
+    if (id == SIGTSTP)
+    {
+        processNode *lastFg = get_last_fg_process();
+        if (!lastFg)
+        {
+            print_error("No foreground process running");
+            return;
+        }
+        lastFg->isRunning = 0;
+        kill(lastFg->pid, SIGTSTP);
+    }
+}
+
+void fg(int pid)
+{
+    int status;
+    kill(pid, SIGCONT);
+    processNode *proc = get_process_with_id(pid);
+    if (!proc)
+        return;
+    proc->isRunning = 1;
+    waitpid(pid, &status, WUNTRACED);
+    return;
+}
+
+void bg(int pid)
+{
+    kill(pid, SIGCONT);
+    processNode *proc = get_process_with_id(pid);
+    if (!proc)
+        return;
+    proc->isRunning = 1;
+    // waitpid(pid, &status, WUNTRACED);
+    return;
 }

@@ -191,8 +191,6 @@ int sysCmdHandler(int argc, char *argv[])
 
 int imanHandler(int argc, char *argv[])
 {
-    char cmd[BUFFER_SMALL] = {0};
-    char *temp;
     if (argc == 1)
     {
         print_error("Enter the command to get the manual for");
@@ -205,7 +203,7 @@ int imanHandler(int argc, char *argv[])
         return 1;
     }
 
-    get_man_page(cmd);
+    get_man_page(argv[1]);
 }
 
 int activitiesHandler(int argc, char *argv[])
@@ -224,6 +222,28 @@ int pingHandler(int argc, char *argv[])
     return 0;
 }
 
+int fgHandler(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
+        print_error("Invalid syntax");
+        return 1;
+    }
+    fg(atoi(argv[1]));
+    return 0;
+}
+
+int bgHandler(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
+        print_error("Invalid syntax");
+        return 1;
+    }
+    bg(atoi(argv[1]));
+    return 0;
+}
+
 cmdMap cmdTable[] = {
     {"", UNKNOWN, sysCmdHandler},
     {"exit", EXIT, exitHandler},
@@ -234,6 +254,8 @@ cmdMap cmdTable[] = {
     {"seek", SEEK, seekHandler},
     {"iman", IMAN, imanHandler},
     {"ping", PING, pingHandler},
+    {"fg", FG, fgHandler},
+    {"bg", BG, bgHandler},
     {"activities", ACTIVITIES, activitiesHandler}};
 
 void execute_multi_line_command(char *cmd)
@@ -271,6 +293,7 @@ int execute_command(execHandler handler, int argc, char *argv[], char isBg)
     {
         if (isBg)
         {
+            // Background child process
             FILE *outputFile = fopen(PREV_COMMAND_OUTPUT, "w");
             if (outputFile == NULL)
             {
@@ -291,30 +314,35 @@ int execute_command(execHandler handler, int argc, char *argv[], char isBg)
             RESET_IO_REDIRECTION;
             printf(ANSI_FG_COLOR_YELLOW "%s", argv[0]);
             print_error(" No such command found");
+            remove_process_with_id(pid);
             exit(0);
         }
         else
         {
+            // Foreground child process
             handler(argc, argv);
             RESET_IO_REDIRECTION;
             printf(ANSI_FG_COLOR_YELLOW "%s", argv[0]);
             print_error(" No such command found");
+            remove_process_with_id(pid);
             exit(0);
         }
     }
     else
     {
+        // Parent process
         insert_process(pid, argc, argv[0], isBg);
         if (isBg)
             printf("[%d] %d\n", Processes->size, pid);
         else
         {
             int status;
-            waitpid(pid, &status, 0);
+            waitpid(pid, &status, WUNTRACED);
+            // printf("Here\n");
             processNode *currProc = get_process_with_id(pid);
             if (!currProc)
                 return 1;
-            currProc->isRunning = 0;
+            // remove_process_with_id(pid);
             return 0;
         }
     }

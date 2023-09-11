@@ -116,7 +116,6 @@ void process_raw(char *text, char *processed)
             STRCAT_TO_PROCESSED("\033[0m");
             continue;
         }
-
         else
         {
             processed[processedInd] = text[textInd];

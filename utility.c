@@ -165,13 +165,12 @@ int readString(const char *str, char *res)
     return i;
 }
 
-
-
 void insert_process(int pid, int argc, char *argv, char isBg)
 {
     processNode *newNode = (processNode *)calloc(1, sizeof(processNode));
     newNode->pid = pid;
     newNode->isBg = isBg;
+    newNode->isRunning = 1;
     newNode->spawnTime = time(NULL);
     strcpy(newNode->pName, argv);
 
@@ -216,11 +215,14 @@ void remove_process_with_id(int pid)
             if (prev == NULL)
             {
                 Processes->head = temp->next;
+                if (temp->next)
+                    temp->next->prev = prev;
                 free(temp);
                 Processes->size -= 1;
                 return;
             }
             prev->next = temp->next;
+            temp->next->prev = prev;
             free(temp);
             Processes->size -= 1;
             return;
