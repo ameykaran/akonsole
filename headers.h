@@ -19,6 +19,7 @@
 #include <ftw.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <termios.h>
 
 #include "prompt.h"
 #include "pastevents.h"
@@ -32,6 +33,7 @@
 #include "iman.h"
 #include "activities.h"
 #include "signal.h"
+#include "neonate.h"
 
 #define ANSI_FG_COLOR_BLACK "\x1b[30m"
 #define ANSI_FG_COLOR_RED "\x1b[31m"
@@ -53,8 +55,7 @@ extern long TERMINAL_PID;
 extern char PREV_COMMAND[1024];
 extern char PREV_COMMAND_OUTPUT[1024];
 extern processList *Processes;
-#define MAX_ARG_NUM 15 
-
+#define MAX_ARG_NUM 15
 
 void printLogo();
 #endif

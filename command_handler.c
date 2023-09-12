@@ -244,6 +244,20 @@ int bgHandler(int argc, char *argv[])
     return 0;
 }
 
+int neonateHandler(int argc, char *argv[])
+{
+    int time = 0;
+    if (argc != 1 && argc != 2)
+    {
+        print_error("Invalid syntax");
+        return 1;
+    }
+    if (argc == 2)
+        time = atoi(argv[1]);
+    neonate(time);
+    return 0;
+}
+
 cmdMap cmdTable[] = {
     {"", UNKNOWN, sysCmdHandler},
     {"exit", EXIT, exitHandler},
@@ -256,6 +270,7 @@ cmdMap cmdTable[] = {
     {"ping", PING, pingHandler},
     {"fg", FG, fgHandler},
     {"bg", BG, bgHandler},
+    {"neonate", NEONATE, neonateHandler},
     {"activities", ACTIVITIES, activitiesHandler}};
 
 void execute_multi_line_command(char *cmd)

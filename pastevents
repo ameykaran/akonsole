@@ -1,15 +1,15 @@
-pink
-activities
+neonate 2
+neonate 1
 exit
-vim
-activities
+neonate 1
+neonate 2
 exit
-vim
-activities
-fg 286446
-activities
-code &
-sleep 10
-echo hihih
-code
-activities
+neonate 1
+neonate 2
+exit
+neonate
+neonate 1
+neonate 5
+warp ../../..
+warp ../..
+seek -d sumit
