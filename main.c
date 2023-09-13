@@ -11,7 +11,7 @@ int main()
 {
     printf("\033c");
 
-    // printLogo();
+    printLogo();
 
     if (!getcwd(HOME_DIR, PATH_MAX))
     {
