@@ -12,7 +12,13 @@
 
 - Paths can be specified both absolutely or relative to the home dierctory of the terminal.
 
+- Prints the output of the background process only on the next input
+
 - IO Redirection is considered for the nearest command
+
+- Multiple commands can be piped. 
+
+
 
 ### warp
 
@@ -113,9 +119,92 @@ Searches in the `path` specified for items having `name` as a prefix.
 
 
 
+### I/O Redirection
+Syntax: `<command> [< input] [> output] [>> append] [<<< text]`
+
+Redirects the input and/or output to the file speciified.
+
+* Works with input file or even input text (given by `<<<`).
+
+* Output can be redirected to either a new file or can be appended to an existing file.
+
+* Only one of the two input options must be given at a time. Similarly, only one output type has to be provided.
+
+
+
+### Activities
+Lists down of all the processes spawned by AKconsole
+
+
+### Ping
+Syntax: `ping <pid> <signal>`
+Sends signal `signal` to the process with ID `pid`
+
+
+### Ctrl - C signal
+Kills all processes by sending a `SIGINT` signal to them
+
+
+### Ctrl - D signal
+Exits the terminal after killing all processes.
+
+
+### Ctrl - Z signal
+Pushes any running foreground process to the background and changes its state from “Running” to “Stopped” 
+
+
+### fg
+Syntax: `fg <pid>`
+
+Brings the running or stopped background process with corresponding pid to foreground, handing it the control of terminal. 
+
+
+### bg
+Syntax: `bg <pid>`
+
+Changes the state of a stopped background process to running (in the background). 
+
+
+
+### Neonate
+Syntax: `neonate [time]`
+
+Prints the PID of the most recently created process on the system every `time` seconds until the key `x` is pressed.
+
+* Default time is 0 seconds if not specified.
+
+* Input redirection cannot be done.
+
+
+
+### iMan
+Syntax: `iman <command>`
+
+Fetches the manpage of the specified `command` from `http://man.he.net/` and prints it.
+
+* Hyperlinks are working. i.e. they point to their respective addresses.
+
+* Text is bold wherever necessary.
+
+* Hyperlinked words are underlined to differentiate them.
+
+
+
+
 
 
 # Assumptions
 - The max len of any command can only be `ARG_MAX` bytes (131072 in my system)
 
 - The max len of username and system name should be `1024` bytes
+
+- Piping and ampersand (background process) should not be given together.
+
+- For combination of IO redirection and pipes, the redirection is given preferance over pipe to the nearest command.
+
+- The pipeline ignores an invalid pipelet and executes as if it wasn't there.
+
+
+Some errors I've found
+- `cat <<< "text" | wc` doesn't work whereas `cat <<< 'text' > a | cat a | wc` works perfectly.
+

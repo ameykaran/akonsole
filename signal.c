@@ -23,14 +23,10 @@ void kill_children(int id)
     {
         processNode *process = get_process_with_id(pid);
         if (!process)
-        {
-            // print_error("Could not find process ");
             return;
-        }
 
         if (process->isBg)
         {
-            // process->isRunning = 0;
             if (status == 0)
                 printf("[%d] %d exited " ANSI_FG_COLOR_GREEN "successfully " ANSI_FG_COLOR_YELLOW "- %s" ANSI_COLOR_RESET "\n", Processes->size - 1, pid, process->pName);
             else
@@ -55,10 +51,7 @@ void kill_fg_process(int id)
 {
     processNode *lastFg = get_last_fg_process();
     if (lastFg)
-    {
-        printf("Recent fg- %d\n", lastFg->pid);
         kill(lastFg->pid, SIGINT);
-    }
 }
 
 void set_signal_handlers()

@@ -31,17 +31,16 @@ void activities()
                 i--;
                 i--;
 
-                if (buffer[i] == 'R')
+                if (buffer[i] == 'R' || buffer[i] == 'S')
                     printf("Running");
 
-                else if (buffer[i] == 'T' || buffer[i] == 'S')
+                else if (buffer[i] == 'T')
                     printf("Stopped");
 
                 printf("\n");
             }
         }
         fclose(statusFile);
-        printf("Struct %c\n", head->isRunning ? 'y' : 'n');
         head = head->next;
     }
 }

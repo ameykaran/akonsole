@@ -119,7 +119,7 @@ void readTextInput(char **string, char *text)
 
 int checkIORedirect(char *cmd, IOQuadrio *quadrio, int suppressOuutput)
 {
-    char newCmd[1000]; // TODO CHANGE to argmax
+    char newCmd[ARG_MAX];
     int newInd = 0;
     for (int i = 0; i < strlen(cmd); i++)
     {
@@ -161,7 +161,7 @@ int checkIORedirect(char *cmd, IOQuadrio *quadrio, int suppressOuutput)
     }
     newCmd[newInd] = 0;
 
-    char *temp, *inp = 0, *out = 0, *app = 0, *inpText = 0, new[1000] = {0}; // todo change argmax
+    char *temp, *inp = 0, *out = 0, *app = 0, *inpText = 0, new[ARG_MAX] = {0};
     char *str = strtok_r(newCmd, " ", &temp);
     char flag = 0, inpFlag = 0, outFlag = 0;
     while (str)
@@ -283,13 +283,7 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int suppressOutp
     char **argv = (char **)malloc(MAX_ARG_NUM * sizeof(char *));
     int argc = 0;
 
-    char *temp, *curr;
-    curr = strtok_r(strdup(cmd), " ", &temp);
-    do
-    {
-        argv[argc++] = strdup(curr);
-        curr = strtok_r(NULL, " ", &temp);
-    } while (curr);
+    my_strtok(argv, &argc, cmd);
 
     cmdMap *evaluatedCmd = NULL;
     for (int i = 0; i < sizeof(cmdTable) / sizeof(cmdMap); i++)
@@ -425,12 +419,10 @@ int execute_pipelets(char **pipelets, int pipeCt)
         int pipeFd[2];
         if (pipe(pipeFd) == -1)
             return error("Pipe creation");
-        // return 1;
 
         int pid = fork();
         if (pid < 0)
             return error("Pipe fork");
-        // return 1;
 
         else if (pid == 0)
         {
@@ -438,12 +430,10 @@ int execute_pipelets(char **pipelets, int pipeCt)
 
             if (i == pipeCt)
             {
-                // dup2(outBackup, STDOUT_FILENO);
                 error_dup(outBackup, STDOUT_FILENO, "Pipe out file dup");
                 close(outBackup);
             }
             else
-                // dup2(pipeFd[PIPE_WRITE], STDOUT_FILENO);
                 error_dup(pipeFd[PIPE_WRITE], STDOUT_FILENO, "Pipe out file dup");
             close(pipeFd[PIPE_WRITE]);
 
@@ -452,14 +442,7 @@ int execute_pipelets(char **pipelets, int pipeCt)
             char *processed = strip(strdup(pipelets[i]), ' ');
             if (checkIORedirect(processed, &quadrio, 1))
                 return 2;
-            // error_dup(inpBackup, STDIN_FILENO, "Pipe inp file dup");
-
-            // if (dup2(inpBackup, STDIN_FILENO) == -1)
-            //     return error("Pipe inp file dup");
             run_single_command(processed, 0, quadrio, 1);
-
-            // error_dup(inpBackup, STDIN_FILENO, "Pipe inp file dup");
-            // close(inpBackup);
             exit(EXIT_SUCCESS);
         }
         int status;
@@ -496,6 +479,12 @@ void execute_single_line_command(char *cmd)
         else if (command[i] == '|')
             pipeCount++;
 
+    if (ampCount && pipeCount)
+    {
+        print_error("Cannot use ampersand and pipes together");
+        return;
+    }
+
     if (ampCount)
     {
         char *bgCmd;
@@ -526,6 +515,11 @@ void execute_single_line_command(char *cmd)
 
         for (int i = 0; i <= pipeCount; i++)
         {
+            if (!pipelet)
+            {
+                print_error("Invalid use of pipe");
+                return;
+            }
             pipelets[i] = strdup(pipelet);
             pipelet = strtok_r(NULL, "|", &temp);
         }

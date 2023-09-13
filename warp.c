@@ -1,21 +1,21 @@
 #include "headers.h"
 
-void cd(char *path, int printOutput)
+void cd(char *path, int suppressOutput)
 {
     if (!strcmp(path, "-"))
     {
         if (!strcmp(PREV_DIR, ""))
         {
-            if (!printOutput)
+            if (!suppressOutput)
                 print_error("Previous path not available.");
             return;
         }
-        cd(PREV_DIR, printOutput);
+        cd(PREV_DIR, suppressOutput);
         return;
     }
     if (!strcmp(path, "~"))
     {
-        cd(HOME_DIR, printOutput);
+        cd(HOME_DIR, suppressOutput);
         return;
     }
 
@@ -23,7 +23,7 @@ void cd(char *path, int printOutput)
 
     if (chdir(absPath) == -1)
     {
-        if (!printOutput)
+        if (!suppressOutput)
         {
             if (errno == EACCES)
                 print_error("Permission denied!");
@@ -46,6 +46,6 @@ void cd(char *path, int printOutput)
 
     if (absPath[0])
         free(absPath);
-    if (!printOutput)
+    if (!suppressOutput)
         printf("%s\n", CURR_DIR);
 }

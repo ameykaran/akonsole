@@ -162,7 +162,7 @@ int readString(const char *str, char *res)
         res[j++] = str[i++];
     res[j] = 0;
     i++;
-    return i;
+    return j + 2;
 }
 
 void insert_process(int pid, int argc, char *argv, char isBg)
@@ -192,23 +192,40 @@ void insert_process(int pid, int argc, char *argv, char isBg)
     return;
 }
 
-// void my_strtok(char **resv, int *resc, char *text)
-// {
-//     int i = 0;
-//     char temp[1000];
-//     int tempInd = 0;
-//     for (; i < strlen(text); i++)
-//     {
-//         if (text[i] == ' ')
-//         {
-//             temp[tempInd] = 0;
-//             resv[*resc] = strdup(temp);
-//             *resc += 1;
-//             tempInd = 0;
+void my_strtok(char **resv, int *resc, char *text)
+{
+    int i = 0;
+    char temp[1000];
+    int tempInd = 0;
+    int n = strlen(text);
 
-//         }
-//     }
-// }
+    while (1)
+    {
+        if (i >= n)
+            break;
+        if (text[i] == ' ')
+        {
+            temp[tempInd] = 0;
+            resv[*resc] = strdup(temp);
+            *resc += 1;
+            tempInd = 0;
+            i++;
+            continue;
+        }
+        if (text[i] == '\"' | text[i] == '\'')
+        {
+            i = i + readString(text + i, temp);
+            resv[*resc] = strdup(temp);
+            *resc += 1;
+            tempInd = 0;
+        }
+        else
+        {
+            temp[tempInd++] = text[i];
+        }
+        i++;
+    }
+}
 
 processNode *get_process_with_id(int pid)
 {

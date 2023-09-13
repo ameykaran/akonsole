@@ -18,6 +18,7 @@ char *trim(char *string, char *prefix);
 
 void print_last_exec_output();
 int readString(const char *str, char *res);
+void my_strtok(char **resv, int *resc, char *text);
 
 typedef struct processNode
 {
