@@ -5,7 +5,6 @@ void activities()
     processNode *head = Processes->head;
     while (head)
     {
-        printf("%ld : %s - ", head->pid, head->pName);
         char statusFilePath[PATH_MAX];
         FILE *statusFile;
 
@@ -14,12 +13,13 @@ void activities()
         statusFile = fopen(statusFilePath, "r");
         if (!statusFile)
         {
-            printf("Stopped\n");
-            printf("Struct %c\n", head->isRunning ? 'y' : 'n');
+            remove_process_with_id(head->pid);
             head = head->next;
             continue;
         }
+
         char buffer[1024];
+        printf("%ld : %s - ", head->pid, head->pName);
 
         while (fgets(buffer, 1024, statusFile))
         {
@@ -28,17 +28,15 @@ void activities()
                 int i = 7;
                 while (buffer[i] != '(')
                     i++;
-                i++;
+                i--;
+                i--;
 
-                printf("%c", buffer[i++] - 'a' + 'A');
+                if (buffer[i] == 'R')
+                    printf("Running");
 
-                for (; i < strlen(buffer); i++)
-                {
-                    if (buffer[i] == ')')
-                        break;
-                    else
-                        printf("%c", buffer[i]);
-                }
+                else if (buffer[i] == 'T' || buffer[i] == 'S')
+                    printf("Stopped");
+
                 printf("\n");
             }
         }

@@ -117,7 +117,7 @@ void readTextInput(char **string, char *text)
     *string = *string + i;
 }
 
-int checkIORedirect(char *cmd, IOQuadrio *quadrio)
+int checkIORedirect(char *cmd, IOQuadrio *quadrio, int suppressOuutput)
 {
     char newCmd[1000]; // TODO CHANGE to argmax
     int newInd = 0;
@@ -170,7 +170,8 @@ int checkIORedirect(char *cmd, IOQuadrio *quadrio)
         {
             if (inpFlag)
             {
-                print_error("Multiple inputs found");
+                if (!suppressOuutput)
+                    print_error("Multiple inputs found");
                 return 1;
             }
             if (strcmp(str, ">") && strcmp(str, "<") && strcmp(str, ">>"))
@@ -184,7 +185,8 @@ int checkIORedirect(char *cmd, IOQuadrio *quadrio)
         {
             if (inpFlag)
             {
-                print_error("Multiple inputs found");
+                if (!suppressOuutput)
+                    print_error("Multiple inputs found");
                 return 1;
             }
             if (strcmp(str, ">") && strcmp(str, "<") && strcmp(str, ">>"))
@@ -206,13 +208,16 @@ int checkIORedirect(char *cmd, IOQuadrio *quadrio)
         {
             if (outFlag)
             {
-                print_error("Multiple outputs found");
+                if (!suppressOuutput)
+                    print_error("Multiple outputs found");
                 return 1;
             }
             if (!strcmp(str, ">") || !strcmp(str, "<") || !strcmp(str, ">>"))
             {
-                print_error("IO Redirection: Empty output file");
-                printf("Use '>' or '>>' to redirect the output to a file\n");
+                if (!suppressOuutput)
+                    print_error("IO Redirection: Empty output file");
+                if (!suppressOuutput)
+                    printf("Use '>' or '>>' to redirect the output to a file\n");
                 return 1;
             }
             out = strdup(str);
@@ -225,13 +230,16 @@ int checkIORedirect(char *cmd, IOQuadrio *quadrio)
         {
             if (outFlag)
             {
-                print_error("Multiple outputs found");
+                if (!suppressOuutput)
+                    print_error("Multiple outputs found");
                 return 1;
             }
             if (!strcmp(str, ">") || !strcmp(str, "<") || !strcmp(str, ">>"))
             {
-                print_error("IO Redirection: Empty output file");
-                printf("Use '>' or '>>' to redirect the output to a file\n");
+                if (!suppressOuutput)
+                    print_error("IO Redirection: Empty output file");
+                if (!suppressOuutput)
+                    printf("Use '>' or '>>' to redirect the output to a file\n");
                 return 1;
             }
             app = strdup(str);
@@ -265,12 +273,12 @@ int checkIORedirect(char *cmd, IOQuadrio *quadrio)
         quadrio->out = strdup(out);
     if (app)
         quadrio->app = strdup(app);
-    printf("%s\t%s\t%s\t%s\n", inp, inpText, out, app);
+    // printf("%s\t%s\t%s\t%s\n", inp, inpText, out, app);
     strcpy(cmd, new);
     return 0;
 }
 
-void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutput)
+void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int suppressOutput)
 {
     char **argv = (char **)malloc(MAX_ARG_NUM * sizeof(char *));
     int argc = 0;
@@ -282,10 +290,6 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutpu
         argv[argc++] = strdup(curr);
         curr = strtok_r(NULL, " ", &temp);
     } while (curr);
-    // strcpy(argv[argc],);
-
-    for (int i = 0; i < argc; i++)
-        printf("%s+", argv[i]);
 
     cmdMap *evaluatedCmd = NULL;
     for (int i = 0; i < sizeof(cmdTable) / sizeof(cmdMap); i++)
@@ -306,7 +310,8 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutpu
         int inpFd = open(quadrio.inp, O_RDONLY);
         if (inpFd == -1)
         {
-            perror("IORedirection");
+            if (!suppressOutput)
+                perror("IORedirection");
             return;
         }
         inpBackup = dup(STDIN_FILENO);
@@ -325,7 +330,8 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutpu
         int inpFd = fileno(tmpFile);
         if (inpFd == -1)
         {
-            perror("IORedirection");
+            if (!suppressOutput)
+                perror("IORedirection");
             return;
         }
         inpBackup = dup(STDIN_FILENO);
@@ -340,7 +346,8 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutpu
         int outFd = open(quadrio.out, O_CREAT | O_WRONLY | O_TRUNC, 0644);
         if (outFd == -1)
         {
-            perror("IORedirection");
+            if (!suppressOutput)
+                perror("IORedirection");
             return;
         }
         outBackup = dup(STDOUT_FILENO);
@@ -352,7 +359,8 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutpu
         int outFd = open(quadrio.out, O_CREAT | O_APPEND | O_TRUNC, 0644);
         if (outFd == -1)
         {
-            perror("IORedirection");
+            if (!suppressOutput)
+                perror("IORedirection");
             return;
         }
         outBackup = dup(STDOUT_FILENO);
@@ -365,7 +373,7 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutpu
     {
         evaluatedCmd->handler(argc, argv);
         RESET_IO_REDIRECTION;
-        if (isPrintOutput)
+        if (!suppressOutput)
             printf("\n");
     }
 
@@ -374,7 +382,7 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutpu
         execute_command(evaluatedCmd->handler, argc, argv, isBg);
         RESET_IO_REDIRECTION;
         endTime = time(NULL);
-        if (!isBg && isPrintOutput)
+        if (!isBg && !suppressOutput)
         {
             printf(ANSI_FG_COLOR_YELLOW "\n%s " ANSI_COLOR_RESET "ran in " ANSI_FG_COLOR_MAGENTA "%lds" ANSI_COLOR_RESET "\n\n", argv[0], endTime - srtTime);
 
@@ -397,7 +405,7 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutpu
 
 int error(char *text)
 {
-    perror(text);
+    fprintf(stderr, "%s: %s\n", text, strerror(errno));
     return 1;
 }
 
@@ -417,10 +425,12 @@ int execute_pipelets(char **pipelets, int pipeCt)
         int pipeFd[2];
         if (pipe(pipeFd) == -1)
             return error("Pipe creation");
+        // return 1;
 
         int pid = fork();
         if (pid < 0)
             return error("Pipe fork");
+        // return 1;
 
         else if (pid == 0)
         {
@@ -428,30 +438,30 @@ int execute_pipelets(char **pipelets, int pipeCt)
 
             if (i == pipeCt)
             {
+                // dup2(outBackup, STDOUT_FILENO);
                 error_dup(outBackup, STDOUT_FILENO, "Pipe out file dup");
                 close(outBackup);
             }
             else
+                // dup2(pipeFd[PIPE_WRITE], STDOUT_FILENO);
                 error_dup(pipeFd[PIPE_WRITE], STDOUT_FILENO, "Pipe out file dup");
+            close(pipeFd[PIPE_WRITE]);
 
             IOQuadrio quadrio = {0};
             int ct = 0, arg[4] = {0};
             char *processed = strip(strdup(pipelets[i]), ' ');
-            if (checkIORedirect(processed, &quadrio))
+            if (checkIORedirect(processed, &quadrio, 1))
                 return 2;
-            error_dup(inpBackup, STDIN_FILENO, "Pipe inp file dup");
+            // error_dup(inpBackup, STDIN_FILENO, "Pipe inp file dup");
 
-            if (dup2(inpBackup, STDIN_FILENO) == -1)
-                return error("Pipe inp file dup");
-            run_single_command(processed, 0, quadrio, 0);
+            // if (dup2(inpBackup, STDIN_FILENO) == -1)
+            //     return error("Pipe inp file dup");
+            run_single_command(processed, 0, quadrio, 1);
 
-            close(pipeFd[PIPE_WRITE]);
-            error_dup(inpBackup, STDIN_FILENO, "Pipe inp file dup");
-            close(inpBackup);
+            // error_dup(inpBackup, STDIN_FILENO, "Pipe inp file dup");
+            // close(inpBackup);
             exit(EXIT_SUCCESS);
         }
-        // else
-        // {
         int status;
         waitpid(pid, &status, WUNTRACED);
 
@@ -464,20 +474,14 @@ int execute_pipelets(char **pipelets, int pipeCt)
         }
         else
             dup2(pipeFd[PIPE_READ], STDIN_FILENO);
-        // }
 
         close(pipeFd[PIPE_READ]);
     }
-
-    // dup2(inpBackup, STDIN_FILENO);
-    // dup2(outBackup, STDOUT_FILENO);
-
-    // close(inpBackup);
-    // close(outBackup);
 }
 
 void execute_single_line_command(char *cmd)
 {
+
     char *arg = strdup(cmd);
     char *command = trim(rstrip(arg, '\n'), " ");
     char *leftCmd = strdup(command);
@@ -503,9 +507,9 @@ void execute_single_line_command(char *cmd)
             IOQuadrio quadrio = {0};
             int ct = 0, arg[4] = {0};
             char *processed = strip(strdup(bgCmd), ' ');
-            if (checkIORedirect(processed, &quadrio))
+            if (checkIORedirect(processed, &quadrio, 0))
                 return;
-            run_single_command(processed, 1, quadrio, 1);
+            run_single_command(processed, 1, quadrio, 0);
             ampCount--;
             bgCmd = strtok_r(NULL, "&", &temp);
         }
@@ -533,9 +537,9 @@ void execute_single_line_command(char *cmd)
     {
         IOQuadrio quadrio = {0};
         char *processed = strip(strdup(leftCmd), ' ');
-        if (checkIORedirect(processed, &quadrio))
+        if (checkIORedirect(processed, &quadrio, 0))
             return;
         if (leftCmd)
-            run_single_command(processed, 0, quadrio, 1);
+            run_single_command(processed, 0, quadrio, 0);
     }
 }

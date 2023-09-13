@@ -192,6 +192,24 @@ void insert_process(int pid, int argc, char *argv, char isBg)
     return;
 }
 
+// void my_strtok(char **resv, int *resc, char *text)
+// {
+//     int i = 0;
+//     char temp[1000];
+//     int tempInd = 0;
+//     for (; i < strlen(text); i++)
+//     {
+//         if (text[i] == ' ')
+//         {
+//             temp[tempInd] = 0;
+//             resv[*resc] = strdup(temp);
+//             *resc += 1;
+//             tempInd = 0;
+
+//         }
+//     }
+// }
+
 processNode *get_process_with_id(int pid)
 {
     processNode *temp = Processes->head;

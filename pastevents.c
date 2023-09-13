@@ -145,19 +145,16 @@ char *replace_pastevents_execute(char *arg)
         newCmd[i - 20 + 1] = '\0';
 
         if (cmdNum <= pair->histCount)
-        {
             strcat(newCmd, rstrip(pair->history[pair->histCount - cmdNum], '\n'));
-            strcat(newCmd, ";");
-        }
 
-        while (arg[i] && arg[i] != ';')
+        while (arg[i] && arg[i] != ';' && arg[i] != '<' && arg[i] != '>')
             i++;
-        strcat(newCmd, arg + i + 1);
+        strcat(newCmd, arg + i);
         free(arg);
         arg = newCmd;
     }
 
-        deallocate_memory(pair->history);
+    deallocate_memory(pair->history);
     free(pair);
 
     return strip(strip(rstrip(arg, ';'), '\n'), ' ');

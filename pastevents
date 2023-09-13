@@ -1,15 +1,15 @@
-neonate 2
-neonate 1
 exit
-neonate 1
-neonate 2
+sleep 100
+activities
 exit
-neonate 1
-neonate 2
+sleep 100
+activities
+sleep 100 &
+activities
 exit
-neonate
-neonate 1
-neonate 5
-warp ../../..
-warp ../..
-seek -d sumit
+sleep 100
+sleep 100&
+activities
+sleep 100&
+activities
+peek

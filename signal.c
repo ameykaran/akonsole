@@ -10,8 +10,10 @@ void ping(int pid, int sig)
         return;
     }
     sig = sig % 32;
-    printf("sig %d\n", sig);
-    kill(pid, sig);
+    if (!kill(pid, sig))
+        printf(ANSI_FG_COLOR_GREEN "Sent signal %d to pid %d\n" ANSI_COLOR_RESET, sig, pid);
+    else
+        printf(ANSI_FG_COLOR_RED "Could not send signal %d to pid %d\n" ANSI_COLOR_RESET, sig, pid);
 }
 
 void kill_children(int id)
@@ -22,7 +24,7 @@ void kill_children(int id)
         processNode *process = get_process_with_id(pid);
         if (!process)
         {
-            print_error("Could not find process ");
+            // print_error("Could not find process ");
             return;
         }
 
@@ -69,7 +71,6 @@ void set_signal_handlers()
     sigaction(SIGCHLD, &bgProcessFinishSig, NULL);
 
     struct sigaction ctrlC_Sig = {0};
-    // exitSig.sa_handler = kill_terminal;
     sigemptyset(&ctrlC_Sig.sa_mask);
     ctrlC_Sig.sa_flags = SA_RESTART;
     ctrlC_Sig.sa_handler = kill_fg_process;
@@ -84,17 +85,6 @@ void set_signal_handlers()
 
 void ctrl_d_handler(char *buffer)
 {
-    // if (buffer[0])
-    //     return;
-
-    printf("%d\n", TERMINAL_PID);
-    // printf("\nDo you really want to quit? [y/n] ");
-    // char c = getchar();
-    // printf("*%d*%s*\n", c, &c);
-
-    // if (c == 'y' || c == 'Y')
-    // {
-
     processNode *head = Processes->head;
     while (head)
     {
@@ -105,10 +95,6 @@ void ctrl_d_handler(char *buffer)
 
     kill_children(0);
     (cmdTable + 1)->handler(0, NULL);
-    // }
-    // else
-    //     signal(SIGINT, kill_terminal);
-    // getchar();
 }
 
 void ctrl_z_handler(int id)
