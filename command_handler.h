@@ -39,11 +39,14 @@ typedef struct IOQuadrio
 
 void execute_multi_line_command(char *cmd);
 
-#define RESET_IO_REDIRECTION         \
+#define RESET_IO_REDIRECTION        \
     dup2(inpBackup, STDIN_FILENO);  \
     dup2(outBackup, STDOUT_FILENO); \
     close(inpBackup);               \
     close(inpTextBackup);           \
-    close(outBackup);
+    close(outBackup);               \
+    inpBackup = -1;                 \
+    inpTextBackup = -1;             \
+    outBackup = -1;
 
 #endif

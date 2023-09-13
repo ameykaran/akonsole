@@ -4,260 +4,6 @@ int inpBackup = -1, inpTextBackup = -1, outBackup = -1;
 
 void execute_single_line_command(char *cmd);
 
-int warpHandler(int argc, char *argv[])
-{
-    if (argc == 1)
-        cd(HOME_DIR, 1);
-    for (int i = 1; i < argc; i++)
-        cd(argv[i], 1);
-}
-
-int peekHandler(int argc, char *argv[])
-{
-    int hidden = 0, detailed = 0;
-    char path[PATH_MAX];
-    strcpy(path, argv[argc - 1]);
-
-    for (int i = 1; i < argc; i++)
-    {
-        char *arg = argv[i];
-        if (arg[0] == '-')
-        {
-            for (int j = 1; j < strlen(arg); j++)
-            {
-                if (arg[j] == 'a')
-                    hidden = 1;
-                else if (arg[j] == 'l')
-                    detailed = 1;
-                else
-                {
-                    print_error("Unkown flags");
-                    // TODO add peek usage
-                    return 1;
-                }
-            }
-        }
-    }
-
-    if (argv[argc - 1][0] == '-' || !strcmp(argv[argc - 1], "peek"))
-        strcpy(path, ".");
-    ls(path, hidden, detailed);
-    return 0;
-}
-
-int pasteventsHandler(int argc, char *argv[])
-{
-    if (argc == 1)
-    {
-        print_history();
-    }
-    else if (!strncmp(argv[1], "execute ", 9))
-    {
-        int i = 1;
-        char
-            cmd[BUFFER_LARGE] = {0};
-        while (i <= argc)
-        {
-            strcat(cmd, argv[i]);
-            strcat(cmd, " ");
-        }
-
-        char *execCmd = replace_pastevents_execute(cmd);
-
-        if (strcmp(execCmd, "") && strcmp(execCmd, " "))
-        {
-            print_error("The given command is erroneous.");
-            return 1;
-        }
-
-        execute_single_line_command(execCmd);
-        return 0;
-    }
-    else if (!strcmp(argv[1], "purge"))
-    {
-        delete_history();
-    }
-    else
-    {
-        print_error("Invalid synatx of pastevents");
-        printf(ANSI_FG_COLOR_BLUE "---Usage---\npastevents               - prints the last 15 commands\npastevents purge         - deletes all saved commands\npastevents execute <num> - executes the <num>th recent command\n" ANSI_COLOR_RESET);
-    }
-}
-
-int procloreHandler(int argc, char *argv[])
-{
-    if (argc == 2)
-    {
-        char *temp;
-        long pid = strtoll(argv[1], &temp, 10);
-        proclore(pid);
-    }
-    else if (argc == 1)
-    {
-        char termPID[1024];
-        sprintf(termPID, "%ld", TERMINAL_PID);
-        proclore(TERMINAL_PID);
-    }
-    else
-        // TODO add usage
-        print_error("Wrong usage");
-}
-
-int seekHandler(int argc, char *argv[])
-{
-    char *name = (char *)calloc(PATH_MAX, sizeof(char));
-    char *path = (char *)calloc(PATH_MAX, sizeof(char));
-    char flags = 0;
-
-    for (int i = 1; i < argc; i++)
-    {
-        if (argv[i][0] == '-')
-        {
-            for (int j = 1; j < strlen(argv[i]); j++)
-            {
-                if (argv[i][j] == 'd')
-                    flags |= SEEK_DIR;
-                else if (argv[i][j] == 'f')
-                    flags |= SEEK_FILE;
-                else if (argv[i][j] == 'l')
-                    flags |= SEEK_LINK;
-                else if (argv[i][j] == 'e')
-                    flags |= SEEK_FLAG_EXEC;
-                else if (argv[i][j] == 'h')
-                    flags |= SEEK_FLAG_HIDDEN;
-                else
-                {
-                    print_error("Unknown flag");
-                    // Todo usage
-                    return 1;
-                }
-            }
-        }
-        else
-        {
-            if (flags & SEEK_FLAG_NAME)
-            {
-                strcpy(path, argv[i]);
-                flags |= SEEK_FLAG_PATH;
-            }
-            else
-            {
-                strcpy(name, argv[i]);
-                flags |= SEEK_FLAG_NAME;
-            }
-        }
-    }
-
-    if ((SEEK_IS_DIR(flags) && SEEK_IS_FILE(flags)) ||
-        (SEEK_IS_DIR(flags) && SEEK_IS_LINK(flags)) ||
-        (SEEK_IS_LINK(flags) && SEEK_IS_FILE(flags)))
-    {
-        print_error("Invalid combination of flags");
-        // Todo usage
-        return 1;
-    }
-
-    if (name[0] == '\0')
-    {
-        print_error("Enter the entry to search for");
-        // Todo usage
-        return 1;
-    }
-
-    if (!(flags & SEEK_FLAG_PATH))
-        strcpy(path, ".");
-    char *newpath = get_abs_path(path);
-    free(path);
-    if (strcmp(newpath, "/"))
-        newpath = rstrip(newpath, '/');
-
-    if (!(SEEK_IS_DIR(flags) | SEEK_IS_FILE(flags) | SEEK_IS_LINK(flags)))
-        flags |= SEEK_DIR | SEEK_FILE | SEEK_LINK;
-
-    seek(newpath, flags, name);
-}
-
-int exitHandler()
-{
-    printf("Exiting the terminal...\n");
-    exit(EXIT_SUCCESS);
-}
-
-int sysCmdHandler(int argc, char *argv[])
-{
-    argv[argc] = NULL;
-    execvp(argv[0], argv);
-}
-
-int imanHandler(int argc, char *argv[])
-{
-    if (argc == 1)
-    {
-        print_error("Enter the command to get the manual for");
-        return 1;
-    }
-
-    if (argc > 2)
-    {
-        print_error("Enter only one command");
-        return 1;
-    }
-
-    get_man_page(argv[1]);
-}
-
-int activitiesHandler(int argc, char *argv[])
-{
-    activities();
-}
-
-int pingHandler(int argc, char *argv[])
-{
-    if (argc != 3)
-    {
-        print_error("Invalid syntax");
-        return 1;
-    }
-    ping(atoi(argv[1]), atoi(argv[2]));
-    return 0;
-}
-
-int fgHandler(int argc, char *argv[])
-{
-    if (argc != 2)
-    {
-        print_error("Invalid syntax");
-        return 1;
-    }
-    fg(atoi(argv[1]));
-    return 0;
-}
-
-int bgHandler(int argc, char *argv[])
-{
-    if (argc != 2)
-    {
-        print_error("Invalid syntax");
-        return 1;
-    }
-    bg(atoi(argv[1]));
-    return 0;
-}
-
-int neonateHandler(int argc, char *argv[])
-{
-    int time = 0;
-    if (argc != 1 && argc != 2)
-    {
-        print_error("Invalid syntax");
-        return 1;
-    }
-    if (argc == 2)
-        time = atoi(argv[1]);
-    neonate(time);
-    return 0;
-}
-
 cmdMap cmdTable[] = {
     {"", UNKNOWN, sysCmdHandler},
     {"exit", EXIT, exitHandler},
@@ -357,6 +103,8 @@ int execute_command(execHandler handler, int argc, char *argv[], char isBg)
             processNode *currProc = get_process_with_id(pid);
             if (!currProc)
                 return 1;
+            RESET_IO_REDIRECTION;
+
             // remove_process_with_id(pid);
             return 0;
         }
@@ -522,7 +270,7 @@ int checkIORedirect(char *cmd, IOQuadrio *quadrio)
     return 0;
 }
 
-void run_single_command(char *cmd, int isBg, IOQuadrio quadrio)
+void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int isPrintOutput)
 {
     char **argv = (char **)malloc(MAX_ARG_NUM * sizeof(char *));
     int argc = 0;
@@ -535,6 +283,9 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio)
         curr = strtok_r(NULL, " ", &temp);
     } while (curr);
     // strcpy(argv[argc],);
+
+    for (int i = 0; i < argc; i++)
+        printf("%s+", argv[i]);
 
     cmdMap *evaluatedCmd = NULL;
     for (int i = 0; i < sizeof(cmdTable) / sizeof(cmdMap); i++)
@@ -549,7 +300,6 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio)
         evaluatedCmd->handler(0, NULL);
 
     time_t srtTime = 0, endTime = 0;
-    srtTime = time(NULL);
 
     if (quadrio.inp)
     {
@@ -610,11 +360,13 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio)
         close(outFd);
     }
 
+    srtTime = time(NULL);
     if (evaluatedCmd->cmdID != UNKNOWN)
     {
         evaluatedCmd->handler(argc, argv);
         RESET_IO_REDIRECTION;
-        printf("\n");
+        if (isPrintOutput)
+            printf("\n");
     }
 
     else
@@ -622,7 +374,7 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio)
         execute_command(evaluatedCmd->handler, argc, argv, isBg);
         RESET_IO_REDIRECTION;
         endTime = time(NULL);
-        if (!isBg)
+        if (!isBg && isPrintOutput)
         {
             printf(ANSI_FG_COLOR_YELLOW "\n%s " ANSI_COLOR_RESET "ran in " ANSI_FG_COLOR_MAGENTA "%lds" ANSI_COLOR_RESET "\n\n", argv[0], endTime - srtTime);
 
@@ -643,42 +395,147 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio)
     return;
 }
 
+int error(char *text)
+{
+    perror(text);
+    return 1;
+}
+
+#define error_dup(fd1, fd2, msg) \
+    if (dup2(fd1, fd2) == -1)    \
+        return error(msg);
+
+int execute_pipelets(char **pipelets, int pipeCt)
+{
+#define PIPE_READ 0
+#define PIPE_WRITE 1
+
+    int inpBackup = dup(STDIN_FILENO), outBackup = dup(STDOUT_FILENO);
+
+    for (int i = 0; i <= pipeCt; i++)
+    {
+        int pipeFd[2];
+        if (pipe(pipeFd) == -1)
+            return error("Pipe creation");
+
+        int pid = fork();
+        if (pid < 0)
+            return error("Pipe fork");
+
+        else if (pid == 0)
+        {
+            close(pipeFd[PIPE_READ]);
+
+            if (i == pipeCt)
+            {
+                error_dup(outBackup, STDOUT_FILENO, "Pipe out file dup");
+                close(outBackup);
+            }
+            else
+                error_dup(pipeFd[PIPE_WRITE], STDOUT_FILENO, "Pipe out file dup");
+
+            IOQuadrio quadrio = {0};
+            int ct = 0, arg[4] = {0};
+            char *processed = strip(strdup(pipelets[i]), ' ');
+            if (checkIORedirect(processed, &quadrio))
+                return 2;
+            error_dup(inpBackup, STDIN_FILENO, "Pipe inp file dup");
+
+            if (dup2(inpBackup, STDIN_FILENO) == -1)
+                return error("Pipe inp file dup");
+            run_single_command(processed, 0, quadrio, 0);
+
+            close(pipeFd[PIPE_WRITE]);
+            error_dup(inpBackup, STDIN_FILENO, "Pipe inp file dup");
+            close(inpBackup);
+            exit(EXIT_SUCCESS);
+        }
+        // else
+        // {
+        int status;
+        waitpid(pid, &status, WUNTRACED);
+
+        close(pipeFd[PIPE_WRITE]);
+
+        if (i == pipeCt)
+        {
+            dup2(inpBackup, STDIN_FILENO);
+            close(inpBackup);
+        }
+        else
+            dup2(pipeFd[PIPE_READ], STDIN_FILENO);
+        // }
+
+        close(pipeFd[PIPE_READ]);
+    }
+
+    // dup2(inpBackup, STDIN_FILENO);
+    // dup2(outBackup, STDOUT_FILENO);
+
+    // close(inpBackup);
+    // close(outBackup);
+}
+
 void execute_single_line_command(char *cmd)
 {
     char *arg = strdup(cmd);
     char *command = trim(rstrip(arg, '\n'), " ");
+    char *leftCmd = strdup(command);
 
     if (!strcmp(command, ""))
         return;
 
-    int ampCount = 0;
+    int ampCount = 0, pipeCount = 0;
     for (int i = 0; command[i]; i++)
         if (command[i] == '&')
             ampCount++;
+        else if (command[i] == '|')
+            pipeCount++;
 
-    char *bgCmd;
-    char *temp;
-    bgCmd = strtok_r(command, "&", &temp);
-
-    while (ampCount)
+    if (ampCount)
     {
-        IOQuadrio quadrio = {0};
-        int ct = 0, arg[4] = {0};
-        char *processed = strip(strdup(bgCmd), ' ');
-        if (checkIORedirect(processed, &quadrio))
-            return;
-        run_single_command(processed, 1, quadrio);
-        ampCount--;
-        bgCmd = strtok_r(NULL, "&", &temp);
-    }
+        char *bgCmd;
+        char *temp;
+        bgCmd = strtok_r(command, "&", &temp);
 
-    if (bgCmd)
-    {
-        IOQuadrio quadrio = {0};
-        char *processed = strip(strdup(bgCmd), ' ');
-        if (checkIORedirect(processed, &quadrio))
-            return;
+        while (ampCount)
+        {
+            IOQuadrio quadrio = {0};
+            int ct = 0, arg[4] = {0};
+            char *processed = strip(strdup(bgCmd), ' ');
+            if (checkIORedirect(processed, &quadrio))
+                return;
+            run_single_command(processed, 1, quadrio, 1);
+            ampCount--;
+            bgCmd = strtok_r(NULL, "&", &temp);
+        }
         if (bgCmd)
-            run_single_command(processed, 0, quadrio);
+            leftCmd = strdup(bgCmd);
+        else
+            leftCmd = 0;
+    }
+    else if (pipeCount)
+    {
+        char *temp, *pipelet;
+        char *pipelets[pipeCount];
+        pipelet = strtok_r(command, "|", &temp);
+
+        for (int i = 0; i <= pipeCount; i++)
+        {
+            pipelets[i] = strdup(pipelet);
+            pipelet = strtok_r(NULL, "|", &temp);
+        }
+
+        execute_pipelets(pipelets, pipeCount);
+        return;
+    }
+    if (leftCmd)
+    {
+        IOQuadrio quadrio = {0};
+        char *processed = strip(strdup(leftCmd), ' ');
+        if (checkIORedirect(processed, &quadrio))
+            return;
+        if (leftCmd)
+            run_single_command(processed, 0, quadrio, 1);
     }
 }
