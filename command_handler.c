@@ -1,6 +1,6 @@
 #include "headers.h"
 
-int inpBackup = -1, inpTextBackup = -1, outBackup = -1;
+int inpBackup = -1, inpTextBackup = -1, outBackup = -1, appBackup = -1;
 
 void execute_single_line_command(char *cmd);
 
@@ -350,16 +350,16 @@ void run_single_command(char *cmd, int isBg, IOQuadrio quadrio, int suppressOutp
     }
     if (quadrio.app)
     {
-        int outFd = open(quadrio.out, O_CREAT | O_APPEND | O_TRUNC, 0644);
-        if (outFd == -1)
+        int appFd = open(quadrio.out, O_WRONLY | O_CREAT | O_APPEND, 0644);
+        if (appFd == -1)
         {
             if (!suppressOutput)
                 perror("IORedirection");
             return;
         }
-        outBackup = dup(STDOUT_FILENO);
-        dup2(outFd, STDOUT_FILENO);
-        close(outFd);
+        appBackup = dup(STDOUT_FILENO);
+        dup2(appFd, STDOUT_FILENO);
+        close(appFd);
     }
 
     srtTime = time(NULL);

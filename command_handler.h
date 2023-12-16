@@ -47,6 +47,7 @@ void execute_multi_line_command(char *cmd);
     close(outBackup);               \
     inpBackup = -1;                 \
     inpTextBackup = -1;             \
-    outBackup = -1;
+    outBackup = -1;                 \
+    appBackup = -1;
 
 #endif

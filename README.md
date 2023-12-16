@@ -1,5 +1,32 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/76mHqLr5)
-# AKonsole
+            .??.    ~J?J?.      
+           :G@@^  :5@@@B~       
+          :B@@&E\.7#@@&?          
+         ^#@@; ^P@@@5:             
+        ^#@@:   @@@#^             AKonsole 
+       ~&@@@5??^5@@@@Y:             the new age terminal!
+      !&@@@@^~*^*~G@@@&?.
+     7@@@G!        7#@@@#!.     
+    :Y55Y3          .J5555~     
+
+
+## Table of Contents
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Features](#description)
+- [Commands](#commands)
+- [Assumptions](#assumptions)
+
+
+## Introduction
+AKonsole is a terminal emulator written in C that supports most of the basic functionalities of a terminal. It is a part of the assignment in Operating Systems and Networks course at IIIT Hyderabad.
+
+
+## Installation
+1. Clone the repository
+2. Run `make` in the root directory
+3. Run `./akonsole` to start the terminal
+
+
 ## Description
 
 - The prompt is of the form `< <username>@<system>:<directory> [last executed foreground command that took longer than 2 secs] >`
@@ -19,6 +46,7 @@
 - Multiple commands can be piped. 
 
 
+## Commands
 
 ### warp
 
@@ -190,9 +218,6 @@ Fetches the manpage of the specified `command` from `http://man.he.net/` and pri
 
 
 
-
-
-
 # Assumptions
 - The max len of any command can only be `ARG_MAX` bytes (131072 in my system)
 
@@ -200,11 +225,12 @@ Fetches the manpage of the specified `command` from `http://man.he.net/` and pri
 
 - Piping and ampersand (background process) should not be given together.
 
-- For combination of IO redirection and pipes, the redirection is given preferance over pipe to the nearest command.
+- For combination of IO redirection and pipes, IO redirection is given preferance over pipe to the nearest command.
 
 - The pipeline ignores an invalid pipelet and executes as if it wasn't there.
 
-
+---
 Some errors I've found
 - `cat <<< "text" | wc` doesn't work whereas `cat <<< 'text' > a | cat a | wc` works perfectly.
 
+---
